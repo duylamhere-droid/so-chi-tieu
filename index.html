@@ -8,13 +8,15 @@
 <style>
 :root{
   --acc:#1D9E75;
-  --bg:#F6F5F1;--card:#FFFFFF;--ink:#1A1A18;--ink2:#55554F;--ink3:#8C8B85;--line:#EDECE7;--soft:#F1F0EB;
-  --up:#D2553F;--down:#1D9E75;--danger:#B3352F;
+  --bg:#FFF7EC;--card:#FFFFFF;--ink:#2B2622;--ink2:#5C534B;--ink3:#948A80;--line:#EFE3D2;--soft:#FBF0E1;
+  --up:#D2553F;--down:#1D9E75;--danger:#B3352F;--edge:#2B2622;
+  --peach:#FFD6A5;--pink:#FFC2CF;--mint:#BDEBD9;
   --r:18px;color-scheme:light;
 }
 :root[data-theme="dark"]{
-  --bg:#121211;--card:#1C1C1A;--ink:#F1F0EC;--ink2:#B9B8B2;--ink3:#86857F;--line:#2A2A27;--soft:#262623;
-  --up:#F08A75;--down:#5CCB9F;--danger:#F0857D;color-scheme:dark;
+  --bg:#1A1714;--card:#25201B;--ink:#F5EDE2;--ink2:#C9BFB3;--ink3:#968B80;--line:#3A332C;--soft:#2F2923;
+  --up:#F08A75;--down:#5CCB9F;--danger:#F0857D;--edge:#000000;
+  --peach:#8A6440;--pink:#8A4A5A;--mint:#3E6E5D;color-scheme:dark;
 }
 :root[data-mau="dao"]{--acc:#E0715A}
 :root[data-mau="oaihuong"]{--acc:#6F66D6}
@@ -30,14 +32,21 @@ body{padding:18px 18px calc(86px + env(safe-area-inset-bottom));max-width:600px;
 h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.4px}
 h2{font-size:12px;font-weight:500;color:var(--ink3);margin:24px 2px 8px;letter-spacing:.5px;text-transform:uppercase}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-.card{background:var(--card);border-radius:var(--r);padding:14px 16px}
+.card{background:var(--card);border-radius:var(--r);padding:14px 16px;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge)}
+.stk{position:relative;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge);border-radius:20px;padding:14px 16px;color:var(--ink)}
+.stk .cat{position:absolute;right:12px;top:6px;font-size:40px;line-height:1}
+.stk .lb{font-size:12px;font-weight:600}
+.stk .bg{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.duo .stk{padding:10px 12px;border-radius:16px}
+.duo .bg{font-size:20px}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .muted{color:var(--ink3);font-size:12px}
 .num{font-variant-numeric:tabular-nums}
 .top{display:flex;align-items:center;justify-content:space-between}
 .hello{font-size:15px;color:var(--ink2)}
-.mon{display:flex;align-items:center;gap:2px;background:var(--card);border-radius:20px;padding:3px}
+.mon{display:flex;align-items:center;gap:2px;background:var(--card);border-radius:20px;padding:2px;border:2px solid var(--edge)}
 .mon button{width:28px;height:28px;border-radius:50%;font-size:15px;color:var(--ink2)}
 .mon button:disabled{opacity:.3}
 .mon span{font-size:13px;font-weight:500;padding:0 6px}
@@ -57,7 +66,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .sum b{color:var(--ink);font-weight:500;font-size:15px}
 .foot{display:flex;justify-content:space-between;font-size:13px;color:var(--ink3);border-top:1px solid var(--line);margin-top:8px;padding-top:10px}
 .foot b{color:var(--ink);font-weight:500}
-.tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.tx{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1.5px dashed var(--line)}
 .tx:last-child{border-bottom:0}
 .ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;background:var(--soft)}
 .tx .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
@@ -67,7 +76,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;background:var(--card);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--ink2)}
-.chip.on{background:var(--ink);color:var(--card)}
+.chip{border:1.5px solid var(--edge)}
+.chip.on{background:var(--peach);color:var(--ink);font-weight:600}
 .bars{display:flex;align-items:flex-end;gap:3px;height:110px}
 .bars div{flex:1;border-radius:3px;background:var(--soft);min-height:2px}
 .bars div.v{background:color-mix(in srgb,var(--ink) 22%,var(--card))}
@@ -94,7 +104,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .tog.on{background:var(--acc)}
 .tog.on::after{left:21px}
 select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5px 10px;color:var(--ink)}
-.addbtn{width:100%;margin-top:10px;padding:12px;border-radius:14px;background:var(--card);color:var(--ink);font-weight:500;font-size:14px}
+.addbtn{width:100%;margin-top:12px;padding:12px;border-radius:14px;background:var(--card);color:var(--ink);font-weight:600;font-size:14px;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge)}
 .pill{background:var(--soft);color:var(--ink);border-radius:20px;padding:6px 12px;font-size:13px;font-weight:500}
 .tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink3)}
@@ -113,7 +123,7 @@ select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5
 .inp:disabled{opacity:.6}
 .danger{color:var(--danger)}
 .btn{width:100%;padding:13px;border-radius:14px;font-weight:500;margin-top:10px}
-.btn.pri{background:var(--ink);color:var(--card)}
+.btn.pri{background:var(--peach);color:var(--ink);border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge)}
 .btn.soft{background:var(--soft)}
 .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:8px 16px;border-radius:20px;font-size:13px;z-index:20;white-space:nowrap}
 .empty{text-align:center;color:var(--ink3);padding:30px 10px;font-size:14px}
@@ -123,7 +133,7 @@ select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5
 </style>
 </head>
 <body>
-<div id="app"><div class="center"><div class="spin"></div><div>Đang mở sổ…</div></div></div>
+<div id="app"><div class="center"><div style="font-size:40px">🐱</div><div class="spin"></div><div>Đang mở sổ…</div></div></div>
 <nav class="tabs" id="tabs" hidden></nav>
 <div id="sheet"></div>
 <script>
@@ -254,17 +264,23 @@ function veHome(){
   const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
   const so = vnd(tong).replace('đ', '');
   return `<div class="top"><span class="hello">${chao}</span>${oThang()}</div>
-  <div style="margin:22px 2px 0">
-    <div class="cap">Số dư</div>
-    <div class="big num">${so}<small>đ</small></div>
-    ${pt === null ? '' : `<div class="delta ${pt > 0 ? 'up' : 'down'}">${pt > 0 ? '↑' : '↓'} ${Math.abs(pt)}% chi so với ${thang === ht ? 'cùng kỳ' : 'tháng trước'}</div>`}
-    <div class="wallets">${D.vi.map(v => esc(v.emoji + ' ' + v.ten + ' ' + ngan(v.soDu))).join('&nbsp;&nbsp;·&nbsp;&nbsp;')}</div>
+  <div class="stk" style="background:var(--peach);margin-top:18px">
+    <div class="cat">🐱</div>
+    <div class="lb">Ví của cậu</div>
+    <div class="bg num">${so}<span style="font-size:18px">đ</span></div>
+    <div style="font-size:12px">${D.vi.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}</div>
   </div>
-  <div class="card" style="margin-top:20px">
+  <div class="duo">
+    <div class="stk" style="background:var(--pink)"><div class="lb">Đã chi 💸</div><div class="bg num">${ngan(chi)}</div>
+      <div style="font-size:11px">${pt === null ? 'tháng này' : (pt > 0 ? '↑ ' : '↓ ') + Math.abs(pt) + '% so cùng kỳ'}</div></div>
+    <div class="stk" style="background:var(--mint)"><div class="lb">Đã thu 🌱</div><div class="bg num">${ngan(thu)}</div>
+      <div style="font-size:11px">${thu ? 'giữ lại ' + Math.max(0, Math.round((thu - chi) * 100 / thu)) + '%' : 'tháng này'}</div></div>
+  </div>
+  <h2>Chi theo danh mục</h2>
+  <div class="card">
     <div class="sum"><span>${tenThang(thang)} · đã chi</span><b class="num">${vnd(chi)}</b></div>
     ${stack(top)}
     <div style="margin-top:8px">${top.length ? top.map(p => dongLg(p, chi)).join('') : '<div class="muted" style="padding:8px 0">Chưa có khoản chi nào 🍃</div>'}</div>
-    <div class="foot"><span>Đã thu</span><span><b class="num">${ngan(thu)}</b>${thu ? ' · giữ lại ' + Math.max(0, Math.round((thu - chi) * 100 / thu)) + '%' : ''}</span></div>
   </div>
   <h2>Gần đây</h2>
   <div class="card" style="padding:2px 16px">${gan.length ? gan.map(g => dongGd(g, info)).join('') : '<div class="empty">Sổ còn trống, nhắn bot <b>50k cafe</b> thử nha</div>'}</div>`;
