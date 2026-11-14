@@ -7,12 +7,12 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --p:#1D9E75;--a:#E8875F;
+  --p:#3BAE8A;--a:#EE9A78;
   --card:#FFFFFF;--ink:#22231F;--ink2:#5A5C56;--ink3:#8A8C85;--line:#E9ECEA;--danger:#B3352F;
   --bg:color-mix(in srgb,var(--p) 5%,#F7F7F4);
   --p-soft:color-mix(in srgb,var(--p) 13%,var(--card));--p-ink:color-mix(in srgb,var(--p) 60%,#000);
   --a-soft:color-mix(in srgb,var(--a) 15%,var(--card));--a-ink:color-mix(in srgb,var(--a) 58%,#000);
-  --hero2:color-mix(in srgb,var(--p) 72%,#000);
+  --hero1:color-mix(in srgb,var(--p) 24%,var(--card));--hero2:color-mix(in srgb,var(--a) 14%,var(--card));
   --r:18px;color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -20,16 +20,16 @@
   --bg:color-mix(in srgb,var(--p) 6%,#121413);
   --p-soft:color-mix(in srgb,var(--p) 22%,var(--card));--p-ink:color-mix(in srgb,var(--p) 42%,#fff);
   --a-soft:color-mix(in srgb,var(--a) 22%,var(--card));--a-ink:color-mix(in srgb,var(--a) 42%,#fff);
-  --hero2:color-mix(in srgb,var(--p) 60%,#000);
+  --hero1:color-mix(in srgb,var(--p) 30%,var(--card));--hero2:color-mix(in srgb,var(--a) 16%,var(--card));
   color-scheme:dark;
 }
-:root[data-mau="dao"]{--p:#DB7458;--a:#3FA987}
-:root[data-mau="oaihuong"]{--p:#7466D4;--a:#E07AA0}
-:root[data-mau="vangbo"]{--p:#C98F22;--a:#3F9FA9}
-:root[data-mau="anhdao"]{--p:#DB5F96;--a:#7466D4}
-:root[data-mau="bien"]{--p:#3485D6;--a:#E8875F}
-:root[data-mau="matcha"]{--p:#6E9A3E;--a:#D9845B}
-:root[data-mau="thanchi"]{--p:#4F5B57;--a:#E8875F}
+:root[data-mau="dao"]{--p:#E8896C;--a:#4FB592}
+:root[data-mau="oaihuong"]{--p:#8C82E0;--a:#EC93B6}
+:root[data-mau="vangbo"]{--p:#D9A441;--a:#55ADB5}
+:root[data-mau="anhdao"]{--p:#E77EAB;--a:#8C82E0}
+:root[data-mau="bien"]{--p:#5AA2E3;--a:#EE9A78}
+:root[data-mau="matcha"]{--p:#86B05A;--a:#E39B73}
+:root[data-mau="thanchi"]{--p:#6F7B76;--a:#EE9A78}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;transition:background .25s}
 body{padding:16px 16px calc(88px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
@@ -42,14 +42,14 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .sp{flex:1;min-width:0}
 .muted{color:var(--ink3);font-size:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.hero{position:relative;overflow:hidden;border-radius:22px;padding:16px 16px 14px;color:#fff;background:linear-gradient(135deg,var(--p),var(--hero2));margin-top:14px}
-.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.11);pointer-events:none}
-.hero::before{width:150px;height:150px;right:-40px;top:-60px}
-.hero::after{width:90px;height:90px;right:40px;bottom:-50px;background:rgba(255,255,255,.07)}
-.hero .lab{font-size:12px;opacity:.85}
-.hero .big{font-size:32px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0 10px}
-.hero .wchips{display:flex;gap:6px;flex-wrap:wrap}
-.hero .wchip{background:rgba(255,255,255,.18);border-radius:20px;padding:3px 10px;font-size:12px}
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:16px 16px 14px;color:var(--p-ink);background:linear-gradient(135deg,var(--hero1),var(--hero2));margin-top:14px}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.hero::before{width:150px;height:150px;right:-44px;top:-62px;background:color-mix(in srgb,var(--p) 16%,transparent)}
+.hero::after{width:84px;height:84px;right:46px;bottom:-46px;background:color-mix(in srgb,var(--a) 18%,transparent)}
+.hero .lab{font-size:12px;opacity:.8}
+.hero .big{font-size:32px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0 10px;color:var(--ink)}
+.hero .wchips{display:flex;gap:6px;flex-wrap:wrap;position:relative;z-index:1}
+.hero .wchip{background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--ink2)}
 .metric{border-radius:var(--r);padding:12px 14px}
 .metric .lab{font-size:12px}
 .metric .big{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:2px 0}
@@ -81,7 +81,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .mbars{display:flex;align-items:flex-end;gap:10px;height:140px}
 .mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
 .mbar i{display:block;width:100%;border-radius:8px;background:var(--p-soft)}
-.mbar.cur i{background:linear-gradient(180deg,var(--p),var(--hero2))}
+.mbar.cur i{background:var(--p)}
 .mbar b{font-size:11px;font-weight:600;color:var(--ink2)}
 .mbar span{font-size:11px;color:var(--ink3)}
 .set{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
@@ -143,8 +143,8 @@ let homeStatus = null;        // trạng thái biểu tượng trên màn hình 
 const DEMO = !(tg && tg.initData) && /demo/.test(location.search);
 const MAU_CAT = ['#5DCAA5','#F0997B','#AFA9EC','#FAC775','#ED93B1','#85B7EB','#97C459','#F5C4B3','#9FE1CB','#D3D1C7'];
 const MAU = {
-  bacha:['#1D9E75','#E8875F','Bạc hà'], dao:['#DB7458','#3FA987','Đào'], oaihuong:['#7466D4','#E07AA0','Oải hương'], vangbo:['#C98F22','#3F9FA9','Vàng bơ'],
-  anhdao:['#DB5F96','#7466D4','Anh đào'], bien:['#3485D6','#E8875F','Biển'], matcha:['#6E9A3E','#D9845B','Matcha'], thanchi:['#4F5B57','#E8875F','Than chì'],
+  bacha:['#3BAE8A','#EE9A78','Bạc hà'], dao:['#E8896C','#4FB592','Đào'], oaihuong:['#8C82E0','#EC93B6','Oải hương'], vangbo:['#D9A441','#55ADB5','Vàng bơ'],
+  anhdao:['#E77EAB','#8C82E0','Anh đào'], bien:['#5AA2E3','#EE9A78','Biển'], matcha:['#86B05A','#E39B73','Matcha'], thanchi:['#6F7B76','#EE9A78','Than chì'],
 };
 const KHAC = { Chi:'Khác', Thu:'Thu khác' };
 
