@@ -7,31 +7,56 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:#F6FAF8;--card:#FFFFFF;--ink:#2C2C2A;--ink2:#5F5E5A;--ink3:#888780;--line:#E7EEEA;
-  --p:#1D9E75;--p-soft:#E1F5EE;--p-ink:#085041;--a:#D85A30;--a-soft:#FAECE7;--a-ink:#712B13;
-  --r:16px;
+  --p:#1D9E75;--a:#E8875F;
+  --card:#FFFFFF;--ink:#22231F;--ink2:#5A5C56;--ink3:#8A8C85;--line:#E9ECEA;--danger:#B3352F;
+  --bg:color-mix(in srgb,var(--p) 5%,#F7F7F4);
+  --p-soft:color-mix(in srgb,var(--p) 13%,var(--card));--p-ink:color-mix(in srgb,var(--p) 60%,#000);
+  --a-soft:color-mix(in srgb,var(--a) 15%,var(--card));--a-ink:color-mix(in srgb,var(--a) 58%,#000);
+  --hero2:color-mix(in srgb,var(--p) 72%,#000);
+  --r:18px;color-scheme:light;
 }
-:root[data-mau="dao"]{--bg:#FDF8F6;--line:#F3E6E0;--p:#D85A30;--p-soft:#FAECE7;--p-ink:#712B13;--a:#1D9E75;--a-soft:#E1F5EE;--a-ink:#085041}
-:root[data-mau="oaihuong"]{--bg:#F8F7FD;--line:#E9E7F6;--p:#534AB7;--p-soft:#EEEDFE;--p-ink:#3C3489;--a:#D4537E;--a-soft:#FBEAF0;--a-ink:#72243E}
-:root[data-mau="vangbo"]{--bg:#FCF9F2;--line:#F1EADB;--p:#BA7517;--p-soft:#FAEEDA;--p-ink:#633806;--a:#1D9E75;--a-soft:#E1F5EE;--a-ink:#085041}
+:root[data-theme="dark"]{
+  --card:#1D211F;--ink:#ECEDE9;--ink2:#B2B5AE;--ink3:#81847E;--line:#2C312E;--danger:#F0857D;
+  --bg:color-mix(in srgb,var(--p) 6%,#121413);
+  --p-soft:color-mix(in srgb,var(--p) 22%,var(--card));--p-ink:color-mix(in srgb,var(--p) 42%,#fff);
+  --a-soft:color-mix(in srgb,var(--a) 22%,var(--card));--a-ink:color-mix(in srgb,var(--a) 42%,#fff);
+  --hero2:color-mix(in srgb,var(--p) 60%,#000);
+  color-scheme:dark;
+}
+:root[data-mau="dao"]{--p:#DB7458;--a:#3FA987}
+:root[data-mau="oaihuong"]{--p:#7466D4;--a:#E07AA0}
+:root[data-mau="vangbo"]{--p:#C98F22;--a:#3F9FA9}
+:root[data-mau="anhdao"]{--p:#DB5F96;--a:#7466D4}
+:root[data-mau="bien"]{--p:#3485D6;--a:#E8875F}
+:root[data-mau="matcha"]{--p:#6E9A3E;--a:#D9845B}
+:root[data-mau="thanchi"]{--p:#4F5B57;--a:#E8875F}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
-body{padding:16px 16px calc(84px + env(safe-area-inset-bottom))}
-h1{font-size:20px;font-weight:600;margin:0}
-h2{font-size:13px;font-weight:500;color:var(--ink2);margin:20px 2px 8px}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;transition:background .25s}
+body{padding:16px 16px calc(88px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
+h1{font-size:21px;font-weight:700;margin:0;letter-spacing:-.3px}
+h2{font-size:13px;font-weight:600;color:var(--ink2);margin:22px 2px 8px;display:flex;align-items:center;gap:6px}
+h2::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--p)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .card{background:var(--card);border-radius:var(--r);padding:14px}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .muted{color:var(--ink3);font-size:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.metric{border-radius:var(--r);padding:14px}
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:16px 16px 14px;color:#fff;background:linear-gradient(135deg,var(--p),var(--hero2));margin-top:14px}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.11);pointer-events:none}
+.hero::before{width:150px;height:150px;right:-40px;top:-60px}
+.hero::after{width:90px;height:90px;right:40px;bottom:-50px;background:rgba(255,255,255,.07)}
+.hero .lab{font-size:12px;opacity:.85}
+.hero .big{font-size:32px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0 10px}
+.hero .wchips{display:flex;gap:6px;flex-wrap:wrap}
+.hero .wchip{background:rgba(255,255,255,.18);border-radius:20px;padding:3px 10px;font-size:12px}
+.metric{border-radius:var(--r);padding:12px 14px}
 .metric .lab{font-size:12px}
-.metric .big{font-size:22px;font-weight:600;letter-spacing:-.3px;margin:2px 0}
-.metric .sub{font-size:11px}
+.metric .big{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:2px 0}
+.metric .sub{font-size:11px;opacity:.9}
 .m1{background:var(--p-soft);color:var(--p-ink)}
 .m2{background:var(--a-soft);color:var(--a-ink)}
-.pill{background:var(--p-soft);color:var(--p-ink);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:500}
+.pill{background:var(--p-soft);color:var(--p-ink);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600}
 .mon{display:flex;align-items:center;gap:6px}
 .mon button{width:30px;height:30px;border-radius:50%;background:var(--card);font-size:16px;color:var(--ink2)}
 .mon button:disabled{opacity:.35}
@@ -56,40 +81,45 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .mbars{display:flex;align-items:flex-end;gap:10px;height:140px}
 .mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
 .mbar i{display:block;width:100%;border-radius:8px;background:var(--p-soft)}
-.mbar.cur i{background:var(--p)}
-.mbar b{font-size:11px;font-weight:500;color:var(--ink2)}
+.mbar.cur i{background:linear-gradient(180deg,var(--p),var(--hero2))}
+.mbar b{font-size:11px;font-weight:600;color:var(--ink2)}
 .mbar span{font-size:11px;color:var(--ink3)}
 .set{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .set:last-child{border-bottom:0}
 .seg{display:flex;background:var(--bg);border-radius:10px;padding:3px}
 .seg button{padding:6px 10px;border-radius:8px;font-size:13px;color:var(--ink2)}
-.seg button.on{background:var(--card);color:var(--ink);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.sw{display:flex;gap:10px}
-.sw button{width:34px;height:34px;border-radius:50%;border:3px solid transparent}
-.sw button.on{border-color:var(--ink)}
-.tog{width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;transition:.2s}
-.tog::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 8px;padding:6px 0 4px}
+.sw button{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--ink2)}
+.sw i{width:38px;height:38px;border-radius:50%;display:block;border:3px solid var(--card);box-shadow:0 0 0 2px transparent;transition:.15s}
+.sw button.on i{box-shadow:0 0 0 2px var(--ink)}
+.sw button.on{color:var(--ink);font-weight:600}
+.tog{width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;transition:.2s;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .tog.on{background:var(--p)}
 .tog.on::after{left:21px}
 select{font:inherit;border:0;background:var(--bg);border-radius:10px;padding:6px 10px;color:var(--ink)}
-.addbtn{width:100%;margin-top:10px;padding:12px;border-radius:12px;background:var(--p-soft);color:var(--p-ink);font-weight:500}
-.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
-.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--ink3);padding:4px 0}
-.tabs button svg{width:22px;height:22px}
-.tabs button.on{color:var(--p)}
-.sheet-bg{position:fixed;inset:0;background:rgba(20,20,20,.35);display:flex;align-items:flex-end;z-index:10}
-.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-height:85vh;overflow:auto;padding:10px 16px calc(20px + env(safe-area-inset-bottom))}
+.addbtn{width:100%;margin-top:10px;padding:12px;border-radius:14px;background:var(--p-soft);color:var(--p-ink);font-weight:600}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--ink3);padding:2px 0}
+.tabs .ico{display:flex;padding:3px 16px;border-radius:14px;transition:.2s}
+.tabs svg{width:22px;height:22px}
+.tabs button.on{color:var(--p-ink);font-weight:600}
+.tabs button.on .ico{background:var(--p-soft);color:var(--p)}
+.sheet-bg{position:fixed;inset:0;background:rgba(10,10,10,.4);display:flex;align-items:flex-end;justify-content:center;z-index:10}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-width:600px;max-height:85vh;overflow:auto;padding:10px 16px calc(20px + env(safe-area-inset-bottom))}
 .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
 .cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 .cats button{background:var(--bg);border-radius:12px;padding:10px 4px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
-.cats button.on{background:var(--p-soft);color:var(--p-ink);font-weight:500}
+.cats button.on{background:var(--p-soft);color:var(--p-ink);font-weight:600}
 .cats button span{font-size:20px}
 .inp{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--ink);margin-top:6px}
-.danger{color:#A32D2D}
-.btn{width:100%;padding:12px;border-radius:12px;font-weight:500;margin-top:10px}
+.inp:disabled{opacity:.6}
+.danger{color:var(--danger)}
+.btn{width:100%;padding:12px;border-radius:14px;font-weight:600;margin-top:10px}
 .btn.pri{background:var(--p);color:#fff}
 .btn.soft{background:var(--bg)}
-.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:20;white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:8px 16px;border-radius:20px;font-size:13px;z-index:20;white-space:nowrap}
 .empty{text-align:center;color:var(--ink3);padding:30px 10px}
 .center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;color:var(--ink2)}
 .spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--p-soft);border-top-color:var(--p);animation:sp 0.8s linear infinite}
@@ -112,7 +142,10 @@ const tg = window.Telegram && Telegram.WebApp;
 let homeStatus = null;        // trạng thái biểu tượng trên màn hình chính
 const DEMO = !(tg && tg.initData) && /demo/.test(location.search);
 const MAU_CAT = ['#5DCAA5','#F0997B','#AFA9EC','#FAC775','#ED93B1','#85B7EB','#97C459','#F5C4B3','#9FE1CB','#D3D1C7'];
-const MAU = { bacha:['#1D9E75','Bạc hà'], dao:['#D85A30','Đào'], oaihuong:['#534AB7','Oải hương'], vangbo:['#BA7517','Vàng bơ'] };
+const MAU = {
+  bacha:['#1D9E75','#E8875F','Bạc hà'], dao:['#DB7458','#3FA987','Đào'], oaihuong:['#7466D4','#E07AA0','Oải hương'], vangbo:['#C98F22','#3F9FA9','Vàng bơ'],
+  anhdao:['#DB5F96','#7466D4','Anh đào'], bien:['#3485D6','#E8875F','Biển'], matcha:['#6E9A3E','#D9845B','Matcha'], thanchi:['#4F5B57','#E8875F','Than chì'],
+};
 const KHAC = { Chi:'Khác', Thu:'Thu khác' };
 
 let D = null;                 // dữ liệu từ Sheet
@@ -207,6 +240,7 @@ function veHome(){
   const all = gds(), info = dmInfo();
   const trong = all.filter(g => khoaThang(g.t) === thang);
   const chi = trong.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
+  const thu = trong.filter(g => g.thu).reduce((a, g) => a + g.tien, 0);
   const ht = khoaThang(Date.now()), truoc = doiThang(thang, -1);
   const homNay = vn(Date.now()).getUTCDate();
   const chiTruoc = all.filter(g => !g.thu && khoaThang(g.t) === truoc && (thang !== ht || vn(g.t).getUTCDate() <= homNay)).reduce((a, g) => a + g.tien, 0);
@@ -217,11 +251,13 @@ function veHome(){
   const gio = vn(Date.now()).getUTCHours();
   const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
   return `<div class="row"><h1 class="sp">${chao}</h1>${oThang()}</div>
-  <div class="grid2" style="margin-top:14px">
-    <div class="metric m1"><div class="lab">Số dư hiện có</div><div class="big">${ngan(tong)}</div>
-      <div class="sub">${D.vi.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}</div></div>
-    <div class="metric m2"><div class="lab">Đã chi ${thang === ht ? 'tháng này' : tenThang(thang).toLowerCase()}</div><div class="big">${ngan(chi)}</div>
-      <div class="sub">${pt === null ? 'Chưa có tháng trước để so' : (pt >= 0 ? '↑ ' : '↓ ') + Math.abs(pt) + '% so với ' + (thang === ht ? 'cùng kỳ ' : '') + 'tháng trước'}</div></div>
+  <div class="hero"><div class="lab">Số dư hiện có</div><div class="big">${vnd(tong)}</div>
+    <div class="wchips">${D.vi.map(v => `<span class="wchip">${esc(v.emoji)} ${esc(v.ten)} · ${ngan(v.soDu)}</span>`).join('')}</div></div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="metric m2"><div class="lab">Đã chi ${thang === ht ? 'tháng này' : 'T' + Number(thang.slice(5))}</div><div class="big">${ngan(chi)}</div>
+      <div class="sub">${pt === null ? 'Chưa có tháng trước để so' : (pt >= 0 ? '↑ ' : '↓ ') + Math.abs(pt) + '% so với ' + (thang === ht ? 'cùng kỳ' : 'tháng trước')}</div></div>
+    <div class="metric m1"><div class="lab">Đã thu ${thang === ht ? 'tháng này' : 'T' + Number(thang.slice(5))}</div><div class="big">${ngan(thu)}</div>
+      <div class="sub">${thu ? 'Giữ lại được ' + Math.max(0, Math.round((thu - chi) * 100 / thu)) + '%' : 'Chưa có khoản thu'}</div></div>
   </div>
   <h2>Chi theo danh mục</h2>
   <div class="card row" style="gap:16px">${donut(parts, 116)}
@@ -279,7 +315,7 @@ function veBieuDo(){
 }
 
 function veCaiDat(){
-  const cd = D.caiDat, mau = cd.mau || 'bacha', lay = String(cd.do_lay), gio = Number(cd.gio_bao_toi);
+  const cd = D.caiDat, mau = cd.mau || 'bacha', lay = String(cd.do_lay), gio = Number(cd.gio_bao_toi), cheDo = cd.che_do || 'tudong';
   const nhom = l => D.danhMuc.filter(d => d.loai === l);
   const dsDm = l => nhom(l).map(d => `<div class="set" data-act="dm" data-ten="${esc(d.ten)}"><div class="ic" style="background:var(--bg)">${esc(d.emoji)}</div><span class="sp">${esc(d.ten)}</span><span class="muted">›</span></div>`).join('');
   let nhanh;
@@ -290,7 +326,10 @@ function veCaiDat(){
   <h2>Mở nhanh</h2>
   <div class="card">${nhanh}</div>
   <h2>Giao diện</h2>
-  <div class="card"><div class="set"><span class="sp">Bảng màu</span><div class="sw">${Object.keys(MAU).map(k => `<button class="${k === mau ? 'on' : ''}" style="background:${MAU[k][0]}" data-act="mau" data-k="${k}" aria-label="${MAU[k][1]}"></button>`).join('')}</div></div></div>
+  <div class="card">
+    <div class="sw">${Object.keys(MAU).map(k => `<button class="${k === mau ? 'on' : ''}" data-act="mau" data-k="${k}"><i style="background:linear-gradient(135deg,${MAU[k][0]} 55%,${MAU[k][1]} 55%)"></i>${MAU[k][2]}</button>`).join('')}</div>
+    <div class="set" style="border-top:1px solid var(--line);margin-top:8px"><span class="sp">Nền</span><div class="seg">${[['tudong','Tự động'],['sang','Sáng'],['toi','Tối']].map(x => `<button class="${x[0] === cheDo ? 'on' : ''}" data-act="chedo" data-v="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+  </div>
   <h2>Bot Telegram</h2>
   <div class="card">
     <div class="set"><span class="sp">Giờ tổng kết tối</span><select data-act="gio">${Array.from({ length:24 }, (_, h) => `<option value="${h}" ${h === gio ? 'selected' : ''}>${h}:00</option>`).join('')}</select></div>
@@ -305,7 +344,7 @@ function veCaiDat(){
 }
 
 /* ---------- bảng trượt ---------- */
-function moSheet(html){ document.getElementById('sheet').innerHTML = `<div class="sheet-bg" data-act="dong"><div class="sheet" onclick="event.stopPropagation()"><div class="grab"></div>${html}</div></div>`; }
+function moSheet(html){ document.getElementById('sheet').innerHTML = `<div class="sheet-bg" data-act="dong"><div class="sheet"><div class="grab"></div>${html}</div></div>`; }
 function dongSheet(){ document.getElementById('sheet').innerHTML = ''; }
 
 function sheetGd(id){
@@ -326,7 +365,7 @@ function sheetDm(ten, loai){
   if (!d) return;
   const macDinh = d.ten === KHAC.Chi || d.ten === KHAC.Thu;
   moSheet(`<b style="font-weight:600;font-size:17px">${ten ? 'Sửa danh mục' : 'Danh mục ' + (loai === 'Thu' ? 'thu' : 'chi') + ' mới'}</b>
-    <div class="muted" style="margin-top:12px">Emoji</div><input class="inp" id="dmEmoji" maxlength="4" value="${esc(d.emoji)}" placeholder="🍵">
+    <div class="muted" style="margin-top:12px">Emoji</div><input class="inp" id="dmEmoji" maxlength="8" value="${esc(d.emoji)}" placeholder="🍵">
     <div class="muted" style="margin-top:10px">Tên</div><input class="inp" id="dmTen" maxlength="30" value="${esc(d.ten)}" placeholder="Trà sữa" ${macDinh ? 'disabled' : ''}>
     <button class="btn pri" data-act="dmluu" data-cu="${esc(d.ten)}" data-loai="${esc(d.loai)}">Lưu</button>
     ${ten && !macDinh ? `<button class="btn soft danger" data-act="dmxoa" data-ten="${esc(d.ten)}">Xóa danh mục</button><div class="muted" style="text-align:center;margin-top:6px">Các khoản cũ sẽ chuyển về “${d.loai === 'Thu' ? KHAC.Thu : KHAC.Chi}”</div>` : ''}`);
@@ -346,13 +385,21 @@ function ve(){
   document.getElementById('app').innerHTML = v();
   const t = document.getElementById('tabs');
   t.hidden = false;
-  t.innerHTML = [['home','Tổng quan'],['gd','Giao dịch'],['bd','Biểu đồ'],['cd','Tùy chỉnh']].map(x => `<button class="${tab === x[0] ? 'on' : ''}" data-act="tab" data-t="${x[0]}">${ICON[x[0]]}${x[1]}</button>`).join('');
+  t.innerHTML = [['home','Tổng quan'],['gd','Giao dịch'],['bd','Biểu đồ'],['cd','Tùy chỉnh']].map(x => `<button class="${tab === x[0] ? 'on' : ''}" data-act="tab" data-t="${x[0]}"><span class="ico">${ICON[x[0]]}</span>${x[1]}</button>`).join('');
+}
+function laNenToi(){
+  const cheDo = (D && D.caiDat.che_do) || 'tudong';
+  if (cheDo === 'toi') return true;
+  if (cheDo === 'sang') return false;
+  if (tg && tg.initData) return tg.colorScheme === 'dark';
+  return !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
 }
 function apDungMau(){
   const m = (D && D.caiDat.mau) || 'bacha';
   document.documentElement.dataset.mau = m;
+  document.documentElement.dataset.theme = laNenToi() ? 'dark' : 'light';
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
-  try { tg && tg.setHeaderColor && tg.setHeaderColor(bg); tg && tg.setBackgroundColor && tg.setBackgroundColor(bg); tg && tg.setBottomBarColor && tg.setBottomBarColor('#ffffff'); } catch (e) {}
+  try { tg && tg.setHeaderColor && tg.setHeaderColor(bg); tg && tg.setBackgroundColor && tg.setBackgroundColor(bg); tg && tg.setBottomBarColor && tg.setBottomBarColor(getComputedStyle(document.documentElement).getPropertyValue('--card').trim()); } catch (e) {}
 }
 
 document.addEventListener('click', e => {
@@ -362,10 +409,11 @@ document.addEventListener('click', e => {
   else if (a === 'thang') { thang = doiThang(thang, Number(el.dataset.b)); rung(); ve(); }
   else if (a === 'loc') { locDm = el.dataset.dm; rung(); ve(); }
   else if (a === 'gd') { rung(); sheetGd(el.dataset.id); }
-  else if (a === 'dong') dongSheet();
+  else if (a === 'dong') { if (e.target === el) dongSheet(); }
   else if (a === 'doidm') { dongSheet(); goi({ api:'dm', id:el.dataset.id, ten:el.dataset.ten }, 'Đã đổi danh mục'); }
   else if (a === 'xoa') xacNhan('Xóa khoản này khỏi sổ?', () => { dongSheet(); goi({ api:'xoa', id:el.dataset.id }, 'Đã xóa'); });
   else if (a === 'mau') { D.caiDat.mau = el.dataset.k; apDungMau(); ve(); goi({ api:'caidat', khoa:'mau', gt:el.dataset.k }, 'Đã đổi màu'); }
+  else if (a === 'chedo') { D.caiDat.che_do = el.dataset.v; apDungMau(); ve(); goi({ api:'caidat', khoa:'che_do', gt:el.dataset.v }, 'Đã đổi nền'); }
   else if (a === 'lay') goi({ api:'caidat', khoa:'do_lay', gt:el.dataset.v }, 'Đã lưu');
   else if (a === 'gmail') goi({ api:'caidat', khoa:'bao_gmail_ngay', gt:el.classList.contains('on') ? 'KHONG' : 'CO' }, 'Đã lưu');
   else if (a === 'dm') { rung(); sheetDm(el.dataset.ten); }
@@ -389,6 +437,9 @@ document.addEventListener('change', e => {
 
 /* ---------- khởi động ---------- */
 async function batDau(){
+  apDungMau();
+  try { tg && tg.onEvent && tg.onEvent('themeChanged', apDungMau); } catch (e) {}
+  try { window.matchMedia && matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apDungMau); } catch (e) {}
   if (tg) {
     tg.ready(); tg.expand();
     try {
@@ -419,7 +470,7 @@ function demoApi(p){
     window._demo = {
       vi:[{ ten:'VCB', emoji:'🏦', soDu:4908000 }, { ten:'Tiền mặt', emoji:'💵', soDu:300000 }],
       danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
-      caiDat:{ gio_bao_toi:21, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha' },
+      caiDat:{ gio_bao_toi:21, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha', che_do:(location.search.match(/mode=(\w+)/) || [])[1] || 'tudong' },
       gd,
     };
   }
