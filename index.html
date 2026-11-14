@@ -7,58 +7,60 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --p:#3BAE8A;--a:#EE9A78;
-  --card:#FFFFFF;--ink:#22231F;--ink2:#5A5C56;--ink3:#8A8C85;--line:#E9ECEA;--danger:#B3352F;
-  --bg:color-mix(in srgb,var(--p) 5%,#F7F7F4);
-  --p-soft:color-mix(in srgb,var(--p) 13%,var(--card));--p-ink:color-mix(in srgb,var(--p) 60%,#000);
-  --a-soft:color-mix(in srgb,var(--a) 15%,var(--card));--a-ink:color-mix(in srgb,var(--a) 58%,#000);
-  --hero1:color-mix(in srgb,var(--p) 24%,var(--card));--hero2:color-mix(in srgb,var(--a) 14%,var(--card));
-  --r:18px;color-scheme:light;
+  --p:#2FA67F;--a:#F08C66;
+  --card:#FFFFFF;--ink:#1F2421;--ink2:#545A56;--ink3:#878C88;--line:#ECEFED;--danger:#B3352F;
+  --bg:color-mix(in srgb,var(--p) 8%,#F8F7F3);
+  --p-soft:color-mix(in srgb,var(--p) 26%,var(--card));--p-ink:color-mix(in srgb,var(--p) 55%,#0b1a14);
+  --a-soft:color-mix(in srgb,var(--a) 28%,var(--card));--a-ink:color-mix(in srgb,var(--a) 50%,#2a120a);
+  --hero1:color-mix(in srgb,var(--p) 48%,var(--card));--hero2:color-mix(in srgb,var(--p) 30%,var(--card));
+  --shadow:0 1px 2px rgba(20,30,25,.04),0 6px 18px rgba(20,30,25,.06);
+  --r:20px;color-scheme:light;
 }
 :root[data-theme="dark"]{
-  --card:#1D211F;--ink:#ECEDE9;--ink2:#B2B5AE;--ink3:#81847E;--line:#2C312E;--danger:#F0857D;
-  --bg:color-mix(in srgb,var(--p) 6%,#121413);
-  --p-soft:color-mix(in srgb,var(--p) 22%,var(--card));--p-ink:color-mix(in srgb,var(--p) 42%,#fff);
-  --a-soft:color-mix(in srgb,var(--a) 22%,var(--card));--a-ink:color-mix(in srgb,var(--a) 42%,#fff);
-  --hero1:color-mix(in srgb,var(--p) 30%,var(--card));--hero2:color-mix(in srgb,var(--a) 16%,var(--card));
+  --card:#1E2320;--ink:#EEF0EC;--ink2:#B4B8B2;--ink3:#868A84;--line:#2D332F;--danger:#F0857D;
+  --bg:color-mix(in srgb,var(--p) 7%,#121513);
+  --p-soft:color-mix(in srgb,var(--p) 30%,var(--card));--p-ink:color-mix(in srgb,var(--p) 40%,#fff);
+  --a-soft:color-mix(in srgb,var(--a) 30%,var(--card));--a-ink:color-mix(in srgb,var(--a) 40%,#fff);
+  --hero1:color-mix(in srgb,var(--p) 52%,var(--card));--hero2:color-mix(in srgb,var(--p) 30%,var(--card));
+  --shadow:none;
   color-scheme:dark;
 }
-:root[data-mau="dao"]{--p:#E8896C;--a:#4FB592}
-:root[data-mau="oaihuong"]{--p:#8C82E0;--a:#EC93B6}
-:root[data-mau="vangbo"]{--p:#D9A441;--a:#55ADB5}
-:root[data-mau="anhdao"]{--p:#E77EAB;--a:#8C82E0}
-:root[data-mau="bien"]{--p:#5AA2E3;--a:#EE9A78}
-:root[data-mau="matcha"]{--p:#86B05A;--a:#E39B73}
-:root[data-mau="thanchi"]{--p:#6F7B76;--a:#EE9A78}
+:root[data-mau="dao"]{--p:#E57B5C;--a:#3BAA85}
+:root[data-mau="oaihuong"]{--p:#7F73DB;--a:#E9849F}
+:root[data-mau="vangbo"]{--p:#D49A2C;--a:#3FA3AD}
+:root[data-mau="anhdao"]{--p:#E06A9E;--a:#7F73DB}
+:root[data-mau="bien"]{--p:#4692DC;--a:#F08C66}
+:root[data-mau="matcha"]{--p:#77A645;--a:#E08A60}
+:root[data-mau="thanchi"]{--p:#5E6A65;--a:#F08C66}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;transition:background .25s}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
 body{padding:16px 16px calc(88px + env(safe-area-inset-bottom));max-width:600px;margin:0 auto}
 h1{font-size:21px;font-weight:700;margin:0;letter-spacing:-.3px}
 h2{font-size:13px;font-weight:600;color:var(--ink2);margin:22px 2px 8px;display:flex;align-items:center;gap:6px}
 h2::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--p)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-.card{background:var(--card);border-radius:var(--r);padding:14px}
+.card{background:var(--card);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
 .row{display:flex;align-items:center;gap:10px}
 .sp{flex:1;min-width:0}
 .muted{color:var(--ink3);font-size:12px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.hero{position:relative;overflow:hidden;border-radius:22px;padding:16px 16px 14px;color:var(--p-ink);background:linear-gradient(135deg,var(--hero1),var(--hero2));margin-top:14px}
+.hero{position:relative;overflow:hidden;border-radius:24px;padding:18px 16px 16px;color:var(--p-ink);box-shadow:var(--shadow);background:linear-gradient(135deg,var(--hero1),var(--hero2));margin-top:14px}
 .hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
-.hero::before{width:150px;height:150px;right:-44px;top:-62px;background:color-mix(in srgb,var(--p) 16%,transparent)}
-.hero::after{width:84px;height:84px;right:46px;bottom:-46px;background:color-mix(in srgb,var(--a) 18%,transparent)}
-.hero .lab{font-size:12px;opacity:.8}
+.hero::before{width:160px;height:160px;right:-46px;top:-66px;background:rgba(255,255,255,.28)}
+.hero::after{width:90px;height:90px;right:52px;bottom:-50px;background:color-mix(in srgb,var(--a) 40%,transparent)}
+.hero .lab{font-size:12px;font-weight:600;opacity:.85}
 .hero .big{font-size:32px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0 10px;color:var(--ink)}
 .hero .wchips{display:flex;gap:6px;flex-wrap:wrap;position:relative;z-index:1}
-.hero .wchip{background:color-mix(in srgb,var(--card) 70%,transparent);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--ink2)}
-.metric{border-radius:var(--r);padding:12px 14px}
+.hero .wchip{background:color-mix(in srgb,var(--card) 78%,transparent);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:500;color:var(--ink)}
+.metric{border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow)}
 .metric .lab{font-size:12px}
-.metric .big{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:2px 0}
+.metric .big{font-size:21px;font-weight:700;letter-spacing:-.3px;margin:2px 0;color:var(--ink)}
 .metric .sub{font-size:11px;opacity:.9}
 .m1{background:var(--p-soft);color:var(--p-ink)}
 .m2{background:var(--a-soft);color:var(--a-ink)}
 .pill{background:var(--p-soft);color:var(--p-ink);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:600}
 .mon{display:flex;align-items:center;gap:6px}
-.mon button{width:30px;height:30px;border-radius:50%;background:var(--card);font-size:16px;color:var(--ink2)}
+.mon button{width:30px;height:30px;border-radius:50%;background:var(--card);font-size:16px;color:var(--ink2);box-shadow:var(--shadow)}
 .mon button:disabled{opacity:.35}
 .tx{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
 .tx:last-child{border-bottom:0}
@@ -69,18 +71,18 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .day{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin:16px 4px 6px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;background:var(--card);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--ink2)}
+.chip{flex:none;background:var(--card);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--ink2);box-shadow:var(--shadow)}
 .chip.on{background:var(--p);color:#fff}
 .lg{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
 .dot{width:9px;height:9px;border-radius:50%;flex:none}
 .bars{display:flex;align-items:flex-end;gap:3px;height:120px}
-.bars div{flex:1;border-radius:4px 4px 2px 2px;background:var(--p-soft);min-height:2px}
+.bars div{flex:1;border-radius:4px 4px 2px 2px;background:color-mix(in srgb,var(--p) 40%,var(--card));min-height:2px}
 .bars div.hi{background:var(--a)}
 .bars div.today{background:var(--p)}
 .axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:6px}
 .mbars{display:flex;align-items:flex-end;gap:10px;height:140px}
 .mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
-.mbar i{display:block;width:100%;border-radius:8px;background:var(--p-soft)}
+.mbar i{display:block;width:100%;border-radius:8px;background:color-mix(in srgb,var(--p) 34%,var(--card))}
 .mbar.cur i{background:var(--p)}
 .mbar b{font-size:11px;font-weight:600;color:var(--ink2)}
 .mbar span{font-size:11px;color:var(--ink3)}
@@ -141,10 +143,10 @@ const LINK_NHANH = 'https://t.me/' + BOT + '?startapp';
 const tg = window.Telegram && Telegram.WebApp;
 let homeStatus = null;        // trạng thái biểu tượng trên màn hình chính
 const DEMO = !(tg && tg.initData) && /demo/.test(location.search);
-const MAU_CAT = ['#5DCAA5','#F0997B','#AFA9EC','#FAC775','#ED93B1','#85B7EB','#97C459','#F5C4B3','#9FE1CB','#D3D1C7'];
+const MAU_CAT = ['#4CC29A','#F28B66','#9A91E6','#F5BC4E','#EB7FA6','#6AA9E8','#8CBF4E','#F2A68A','#5FC9C0','#C9C7BD'];
 const MAU = {
-  bacha:['#3BAE8A','#EE9A78','Bạc hà'], dao:['#E8896C','#4FB592','Đào'], oaihuong:['#8C82E0','#EC93B6','Oải hương'], vangbo:['#D9A441','#55ADB5','Vàng bơ'],
-  anhdao:['#E77EAB','#8C82E0','Anh đào'], bien:['#5AA2E3','#EE9A78','Biển'], matcha:['#86B05A','#E39B73','Matcha'], thanchi:['#6F7B76','#EE9A78','Than chì'],
+  bacha:['#2FA67F','#F08C66','Bạc hà'], dao:['#E57B5C','#3BAA85','Đào'], oaihuong:['#7F73DB','#E9849F','Oải hương'], vangbo:['#D49A2C','#3FA3AD','Vàng bơ'],
+  anhdao:['#E06A9E','#7F73DB','Anh đào'], bien:['#4692DC','#F08C66','Biển'], matcha:['#77A645','#E08A60','Matcha'], thanchi:['#5E6A65','#F08C66','Than chì'],
 };
 const KHAC = { Chi:'Khác', Thu:'Thu khác' };
 
@@ -230,7 +232,7 @@ function oThang(){
 function dongGd(g, info){
   const d = info[g.dm] || {};
   return `<div class="tx" data-act="gd" data-id="${esc(g.id)}">
-    <div class="ic" style="background:${d.mau ? d.mau + '33' : 'var(--bg)'}">${esc(d.emoji || '•')}</div>
+    <div class="ic" style="background:${d.mau ? d.mau + '4D' : 'var(--bg)'}">${esc(d.emoji || '•')}</div>
     <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
     <div class="muted">${esc(g.dm)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })} · ${esc(g.vi)}</div></div>
     <div class="amt ${g.thu ? 'plus' : ''}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
