@@ -34,7 +34,7 @@ h2{font-size:12px;font-weight:500;color:var(--ink3);margin:24px 2px 8px;letter-s
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .card{background:var(--card);border-radius:var(--r);padding:14px 16px;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge)}
 .stk{position:relative;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge);border-radius:20px;padding:14px 16px;color:var(--ink)}
-.stk .cat{position:absolute;right:12px;top:6px;font-size:40px;line-height:1}
+.stk .cat{position:absolute;right:12px;top:10px;line-height:0}
 .stk .lb{font-size:12px;font-weight:600}
 .stk .bg{font-size:30px;font-weight:700;letter-spacing:-.6px;line-height:1.15;margin:2px 0}
 .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
@@ -133,7 +133,7 @@ select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5
 </style>
 </head>
 <body>
-<div id="app"><div class="center"><div style="font-size:40px">🐱</div><div class="spin"></div><div>Đang mở sổ…</div></div></div>
+<div id="app"><div class="center"><div><svg width="48" height="48" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></div><div class="spin"></div><div>Đang mở sổ…</div></div></div>
 <nav class="tabs" id="tabs" hidden></nav>
 <div id="sheet"></div>
 <script>
@@ -265,7 +265,7 @@ function veHome(){
   const so = vnd(tong).replace('đ', '');
   return `<div class="top"><span class="hello">${chao}</span>${oThang()}</div>
   <div class="stk" style="background:var(--peach);margin-top:18px">
-    <div class="cat">🐱</div>
+    <div class="cat"><svg width="38" height="38" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></div>
     <div class="lb">Ví của cậu</div>
     <div class="bg num">${so}<span style="font-size:18px">đ</span></div>
     <div style="font-size:12px">${D.vi.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}</div>
