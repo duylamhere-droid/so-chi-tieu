@@ -104,7 +104,12 @@ select{font:inherit;border:0;background:var(--bg);border-radius:10px;padding:6px
 // Địa chỉ Apps Script của cậu (URL web app, kết thúc bằng /exec)
 const API = 'https://script.google.com/macros/s/AKfycbzn-NDXizJbpXZFl3aJ0HGtAflg4j3e3-1J2N5QMRXH1vVpRMx-iQnv15w-YgmraOG_/exec';
 
+// Tên bot, dùng để tạo link mở thẳng app
+const BOT = 'Money_tracker_Dylan_bot';
+const LINK_NHANH = 'https://t.me/' + BOT + '?startapp';
+
 const tg = window.Telegram && Telegram.WebApp;
+let homeStatus = null;        // trạng thái biểu tượng trên màn hình chính
 const DEMO = !(tg && tg.initData) && /demo/.test(location.search);
 const MAU_CAT = ['#5DCAA5','#F0997B','#AFA9EC','#FAC775','#ED93B1','#85B7EB','#97C459','#F5C4B3','#9FE1CB','#D3D1C7'];
 const MAU = { bacha:['#1D9E75','Bạc hà'], dao:['#D85A30','Đào'], oaihuong:['#534AB7','Oải hương'], vangbo:['#BA7517','Vàng bơ'] };
@@ -277,7 +282,13 @@ function veCaiDat(){
   const cd = D.caiDat, mau = cd.mau || 'bacha', lay = String(cd.do_lay), gio = Number(cd.gio_bao_toi);
   const nhom = l => D.danhMuc.filter(d => d.loai === l);
   const dsDm = l => nhom(l).map(d => `<div class="set" data-act="dm" data-ten="${esc(d.ten)}"><div class="ic" style="background:var(--bg)">${esc(d.emoji)}</div><span class="sp">${esc(d.ten)}</span><span class="muted">›</span></div>`).join('');
+  let nhanh;
+  if (homeStatus === 'added') nhanh = `<div class="set"><span class="sp">✅ Đã có biểu tượng trên màn hình chính</span></div>`;
+  else if (homeStatus === 'missed' || homeStatus === 'unknown') nhanh = `<div class="set"><div class="sp">Thêm vào màn hình chính<div class="muted">Bấm biểu tượng là vào thẳng app</div></div><button class="pill" data-act="home">📲 Thêm</button></div>`;
+  else nhanh = `<div class="set"><div class="sp">Link mở thẳng app<div class="muted">Dán vào app Phím tắt của iPhone để tạo biểu tượng</div></div><button class="pill" data-act="copy">📋 Sao chép</button></div>`;
   return `<h1>Tùy chỉnh</h1>
+  <h2>Mở nhanh</h2>
+  <div class="card">${nhanh}</div>
   <h2>Giao diện</h2>
   <div class="card"><div class="set"><span class="sp">Bảng màu</span><div class="sw">${Object.keys(MAU).map(k => `<button class="${k === mau ? 'on' : ''}" style="background:${MAU[k][0]}" data-act="mau" data-k="${k}" aria-label="${MAU[k][1]}"></button>`).join('')}</div></div></div>
   <h2>Bot Telegram</h2>
@@ -364,6 +375,12 @@ document.addEventListener('click', e => {
     if (!ten) return toast('Cậu đặt tên cho danh mục nha');
     dongSheet(); goi({ api:'dmluu', cu:el.dataset.cu, ten, emoji, loai:el.dataset.loai }, 'Đã lưu danh mục');
   }
+  else if (a === 'home') { try { tg.addToHomeScreen(); } catch (err) { toast('Telegram này chưa hỗ trợ, dùng link nha'); } }
+  else if (a === 'copy') {
+    const xong = () => { rung('ok'); toast('Đã sao chép link'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(LINK_NHANH).then(xong, () => prompt('Sao chép link này:', LINK_NHANH));
+    else prompt('Sao chép link này:', LINK_NHANH);
+  }
   else if (a === 'dmxoa') xacNhan('Xóa danh mục “' + el.dataset.ten + '”?', () => { dongSheet(); goi({ api:'dmxoa', ten:el.dataset.ten }, 'Đã xóa danh mục'); });
 });
 document.addEventListener('change', e => {
@@ -372,7 +389,15 @@ document.addEventListener('change', e => {
 
 /* ---------- khởi động ---------- */
 async function batDau(){
-  if (tg) { tg.ready(); tg.expand(); }
+  if (tg) {
+    tg.ready(); tg.expand();
+    try {
+      if (tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && tg.checkHomeScreenStatus) {
+        tg.checkHomeScreenStatus(st => { homeStatus = st; if (D && tab === 'cd') ve(); });
+        tg.onEvent('homeScreenAdded', () => { homeStatus = 'added'; toast('Đã thêm vào màn hình chính 🎉'); if (D && tab === 'cd') ve(); });
+      }
+    } catch (e) {}
+  }
   if (!DEMO && !(tg && tg.initData)) {
     document.getElementById('app').innerHTML = '<div class="center"><div style="font-size:34px">🌿</div><b>Mở app từ bot Telegram nha</b><div class="muted">Trang này chỉ chạy bên trong Telegram để giữ dữ liệu của cậu an toàn.</div></div>';
     return;
