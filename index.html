@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Sổ chi tiêu</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#F6FAF8;--card:#FFFFFF;--ink:#2C2C2A;--ink2:#5F5E5A;--ink3:#888780;--line:#E7EEEA;
+  --p:#1D9E75;--p-soft:#E1F5EE;--p-ink:#085041;--a:#D85A30;--a-soft:#FAECE7;--a-ink:#712B13;
+  --r:16px;
+}
+:root[data-mau="dao"]{--bg:#FDF8F6;--line:#F3E6E0;--p:#D85A30;--p-soft:#FAECE7;--p-ink:#712B13;--a:#1D9E75;--a-soft:#E1F5EE;--a-ink:#085041}
+:root[data-mau="oaihuong"]{--bg:#F8F7FD;--line:#E9E7F6;--p:#534AB7;--p-soft:#EEEDFE;--p-ink:#3C3489;--a:#D4537E;--a-soft:#FBEAF0;--a-ink:#72243E}
+:root[data-mau="vangbo"]{--bg:#FCF9F2;--line:#F1EADB;--p:#BA7517;--p-soft:#FAEEDA;--p-ink:#633806;--a:#1D9E75;--a-soft:#E1F5EE;--a-ink:#085041}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{padding:16px 16px calc(84px + env(safe-area-inset-bottom))}
+h1{font-size:20px;font-weight:600;margin:0}
+h2{font-size:13px;font-weight:500;color:var(--ink2);margin:20px 2px 8px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.card{background:var(--card);border-radius:var(--r);padding:14px}
+.row{display:flex;align-items:center;gap:10px}
+.sp{flex:1;min-width:0}
+.muted{color:var(--ink3);font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{border-radius:var(--r);padding:14px}
+.metric .lab{font-size:12px}
+.metric .big{font-size:22px;font-weight:600;letter-spacing:-.3px;margin:2px 0}
+.metric .sub{font-size:11px}
+.m1{background:var(--p-soft);color:var(--p-ink)}
+.m2{background:var(--a-soft);color:var(--a-ink)}
+.pill{background:var(--p-soft);color:var(--p-ink);border-radius:20px;padding:5px 12px;font-size:13px;font-weight:500}
+.mon{display:flex;align-items:center;gap:6px}
+.mon button{width:30px;height:30px;border-radius:50%;background:var(--card);font-size:16px;color:var(--ink2)}
+.mon button:disabled{opacity:.35}
+.tx{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tx:last-child{border-bottom:0}
+.ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.tx .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-weight:600;white-space:nowrap}
+.plus{color:var(--p)}
+.day{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin:16px 4px 6px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;background:var(--card);border-radius:20px;padding:6px 12px;font-size:13px;color:var(--ink2)}
+.chip.on{background:var(--p);color:#fff}
+.lg{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.bars{display:flex;align-items:flex-end;gap:3px;height:120px}
+.bars div{flex:1;border-radius:4px 4px 2px 2px;background:var(--p-soft);min-height:2px}
+.bars div.hi{background:var(--a)}
+.bars div.today{background:var(--p)}
+.axis{display:flex;justify-content:space-between;font-size:11px;color:var(--ink3);margin-top:6px}
+.mbars{display:flex;align-items:flex-end;gap:10px;height:140px}
+.mbar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+.mbar i{display:block;width:100%;border-radius:8px;background:var(--p-soft)}
+.mbar.cur i{background:var(--p)}
+.mbar b{font-size:11px;font-weight:500;color:var(--ink2)}
+.mbar span{font-size:11px;color:var(--ink3)}
+.set{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.set:last-child{border-bottom:0}
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px}
+.seg button{padding:6px 10px;border-radius:8px;font-size:13px;color:var(--ink2)}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.sw{display:flex;gap:10px}
+.sw button{width:34px;height:34px;border-radius:50%;border:3px solid transparent}
+.sw button.on{border-color:var(--ink)}
+.tog{width:46px;height:28px;border-radius:14px;background:var(--line);position:relative;transition:.2s}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.tog.on{background:var(--p)}
+.tog.on::after{left:21px}
+select{font:inherit;border:0;background:var(--bg);border-radius:10px;padding:6px 10px;color:var(--ink)}
+.addbtn{width:100%;margin-top:10px;padding:12px;border-radius:12px;background:var(--p-soft);color:var(--p-ink);font-weight:500}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--ink3);padding:4px 0}
+.tabs button svg{width:22px;height:22px}
+.tabs button.on{color:var(--p)}
+.sheet-bg{position:fixed;inset:0;background:rgba(20,20,20,.35);display:flex;align-items:flex-end;z-index:10}
+.sheet{background:var(--card);border-radius:22px 22px 0 0;width:100%;max-height:85vh;overflow:auto;padding:10px 16px calc(20px + env(safe-area-inset-bottom))}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.cats button{background:var(--bg);border-radius:12px;padding:10px 4px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.cats button.on{background:var(--p-soft);color:var(--p-ink);font-weight:500}
+.cats button span{font-size:20px}
+.inp{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);color:var(--ink);margin-top:6px}
+.danger{color:#A32D2D}
+.btn{width:100%;padding:12px;border-radius:12px;font-weight:500;margin-top:10px}
+.btn.pri{background:var(--p);color:#fff}
+.btn.soft{background:var(--bg)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:20;white-space:nowrap}
+.empty{text-align:center;color:var(--ink3);padding:30px 10px}
+.center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;color:var(--ink2)}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--p-soft);border-top-color:var(--p);animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><div class="spin"></div><div>Đang mở sổ…</div></div></div>
+<nav class="tabs" id="tabs" hidden></nav>
+<div id="sheet"></div>
+<script>
+// Địa chỉ Apps Script của cậu (URL web app, kết thúc bằng /exec)
+const API = 'https://script.google.com/macros/s/AKfycbzn-NDXizJbpXZFl3aJ0HGtAflg4j3e3-1J2N5QMRXH1vVpRMx-iQnv15w-YgmraOG_/exec';
+
+const tg = window.Telegram && Telegram.WebApp;
+const DEMO = !(tg && tg.initData) && /demo/.test(location.search);
+const MAU_CAT = ['#5DCAA5','#F0997B','#AFA9EC','#FAC775','#ED93B1','#85B7EB','#97C459','#F5C4B3','#9FE1CB','#D3D1C7'];
+const MAU = { bacha:['#1D9E75','Bạc hà'], dao:['#D85A30','Đào'], oaihuong:['#534AB7','Oải hương'], vangbo:['#BA7517','Vàng bơ'] };
+const KHAC = { Chi:'Khác', Thu:'Thu khác' };
+
+let D = null;                 // dữ liệu từ Sheet
+let tab = 'home';
+let thang = khoaThang(Date.now());
+let locDm = '';
+
+/* ---------- tiện ích ---------- */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function vnd(n){ return Math.round(n).toLocaleString('vi-VN') + 'đ'; }
+function ngan(n){
+  const a = Math.abs(Math.round(n)), d = n < 0 ? '-' : '';
+  const g = (x, k) => String(parseFloat(x.toFixed(k))).replace('.', ',');
+  if (a < 1000) return d + a + 'đ';
+  if (a < 1e6) return d + g(a / 1e3, 1) + 'k';
+  return d + g(a / 1e6, 2) + 'tr';
+}
+function vn(t){ return new Date(t + 7 * 3600e3); }                 // giờ Việt Nam qua UTC
+function khoaThang(t){ const d = vn(t); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+function khoaNgay(t){ return vn(t).toISOString().slice(0, 10); }
+function doiThang(k, b){ const [y, m] = k.split('-').map(Number); const d = new Date(Date.UTC(y, m - 1 + b, 1)); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); }
+function tenThang(k){ return 'Tháng ' + Number(k.slice(5)) + '/' + k.slice(0, 4); }
+function soNgay(k){ const [y, m] = k.split('-').map(Number); return new Date(Date.UTC(y, m, 0)).getUTCDate(); }
+function rung(k){ try { tg && tg.HapticFeedback && (k === 'ok' ? tg.HapticFeedback.notificationOccurred('success') : tg.HapticFeedback.selectionChanged()); } catch (e) {} }
+function toast(t){ const el = document.createElement('div'); el.className = 'toast'; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 1800); }
+
+function gds(){ return D.gd.map(r => ({ id:r[0], t:r[1], thu:r[2] === 1, tien:r[3], dm:r[4], vi:r[5], ghi:r[6], nguon:r[7] })); }
+function dmInfo(){
+  const m = {}; let i = 0;
+  D.danhMuc.forEach(d => m[d.ten] = { emoji:d.emoji, loai:d.loai, mau:(d.ten === KHAC.Chi || d.ten === KHAC.Thu) ? '#B4B2A9' : MAU_CAT[i++ % (MAU_CAT.length - 1)] });
+  return m;
+}
+function tenNgan(g){ const s = String(g.ghi || '').split(' | ')[0].trim() || g.dm; return s; }
+
+/* ---------- gọi Apps Script ---------- */
+async function api(params){
+  if (DEMO) return demoApi(params);
+  const q = new URLSearchParams(Object.assign({}, params, { init: tg.initData }));
+  const r = await fetch(API + '?' + q.toString());
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.loi || 'Lỗi không rõ');
+  return j.data;
+}
+async function goi(params, okMsg){
+  try { D = await api(params); apDungMau(); ve(); if (okMsg) { rung('ok'); toast(okMsg); } }
+  catch (e) { toast('⚠️ ' + e.message); }
+}
+
+/* ---------- biểu đồ SVG ---------- */
+function donut(parts, size){
+  const tong = parts.reduce((a, p) => a + p.v, 0);
+  const r = 15.9155, C = 100;
+  let off = 25, s = '';
+  if (!tong) s = `<circle cx="21" cy="21" r="${r}" fill="none" stroke="var(--line)" stroke-width="6"/>`;
+  parts.forEach(p => {
+    const len = p.v / tong * C;
+    s += `<circle cx="21" cy="21" r="${r}" fill="none" stroke="${p.c}" stroke-width="6" stroke-dasharray="${Math.max(len - 0.6, 0.01)} ${C - Math.max(len - 0.6, 0.01)}" stroke-dashoffset="${off}"/>`;
+    off -= len;
+  });
+  return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="Biểu đồ tròn">${s}
+    <text x="21" y="20" text-anchor="middle" font-size="3.4" fill="var(--ink3)">Đã chi</text>
+    <text x="21" y="25.5" text-anchor="middle" font-size="5" font-weight="600" fill="var(--ink)">${ngan(tong)}</text></svg>`;
+}
+function phanDm(list){
+  const info = dmInfo(), m = {};
+  list.filter(g => !g.thu).forEach(g => m[g.dm] = (m[g.dm] || 0) + g.tien);
+  return Object.keys(m).sort((a, b) => m[b] - m[a]).map(k => ({ ten:k, v:m[k], c:(info[k] || {}).mau || '#D3D1C7', emoji:(info[k] || {}).emoji || '•' }));
+}
+function gopTop(parts, n){
+  if (parts.length <= n) return parts;
+  const top = parts.slice(0, n - 1), con = parts.slice(n - 1).reduce((a, p) => a + p.v, 0);
+  return top.concat([{ ten:'Còn lại', v:con, c:'#D3D1C7', emoji:'⋯' }]);
+}
+
+/* ---------- các màn hình ---------- */
+function oThang(){
+  const ht = khoaThang(Date.now());
+  return `<div class="mon"><button data-act="thang" data-b="-1" aria-label="Tháng trước">‹</button>
+    <span class="pill">${tenThang(thang)}</span>
+    <button data-act="thang" data-b="1" aria-label="Tháng sau" ${thang >= ht ? 'disabled' : ''}>›</button></div>`;
+}
+function dongGd(g, info){
+  const d = info[g.dm] || {};
+  return `<div class="tx" data-act="gd" data-id="${esc(g.id)}">
+    <div class="ic" style="background:${d.mau ? d.mau + '33' : 'var(--bg)'}">${esc(d.emoji || '•')}</div>
+    <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
+    <div class="muted">${esc(g.dm)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })} · ${esc(g.vi)}</div></div>
+    <div class="amt ${g.thu ? 'plus' : ''}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
+}
+
+function veHome(){
+  const all = gds(), info = dmInfo();
+  const trong = all.filter(g => khoaThang(g.t) === thang);
+  const chi = trong.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
+  const ht = khoaThang(Date.now()), truoc = doiThang(thang, -1);
+  const homNay = vn(Date.now()).getUTCDate();
+  const chiTruoc = all.filter(g => !g.thu && khoaThang(g.t) === truoc && (thang !== ht || vn(g.t).getUTCDate() <= homNay)).reduce((a, g) => a + g.tien, 0);
+  const pt = chiTruoc ? Math.round((chi - chiTruoc) * 100 / chiTruoc) : null;
+  const tong = D.vi.reduce((a, v) => a + v.soDu, 0);
+  const parts = gopTop(phanDm(trong), 5);
+  const gan = all.slice().sort((a, b) => b.t - a.t).slice(0, 5);
+  const gio = vn(Date.now()).getUTCHours();
+  const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
+  return `<div class="row"><h1 class="sp">${chao}</h1>${oThang()}</div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="metric m1"><div class="lab">Số dư hiện có</div><div class="big">${ngan(tong)}</div>
+      <div class="sub">${D.vi.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}</div></div>
+    <div class="metric m2"><div class="lab">Đã chi ${thang === ht ? 'tháng này' : tenThang(thang).toLowerCase()}</div><div class="big">${ngan(chi)}</div>
+      <div class="sub">${pt === null ? 'Chưa có tháng trước để so' : (pt >= 0 ? '↑ ' : '↓ ') + Math.abs(pt) + '% so với ' + (thang === ht ? 'cùng kỳ ' : '') + 'tháng trước'}</div></div>
+  </div>
+  <h2>Chi theo danh mục</h2>
+  <div class="card row" style="gap:16px">${donut(parts, 116)}
+    <div class="sp">${parts.length ? parts.map(p => `<div class="lg"><span class="dot" style="background:${p.c}"></span><span class="sp">${esc(p.emoji)} ${esc(p.ten)}</span><b style="font-weight:500">${ngan(p.v)}</b></div>`).join('') : '<div class="muted">Chưa có khoản chi nào 🍃</div>'}</div></div>
+  <h2>Gần đây</h2>
+  <div class="card" style="padding:4px 14px">${gan.length ? gan.map(g => dongGd(g, info)).join('') : '<div class="empty">Sổ còn trống, nhắn bot <b>50k cafe</b> thử nha</div>'}</div>`;
+}
+
+function veGd(){
+  const info = dmInfo();
+  let list = gds().filter(g => khoaThang(g.t) === thang).sort((a, b) => b.t - a.t);
+  const dms = [...new Set(list.map(g => g.dm))];
+  if (locDm && !dms.includes(locDm)) locDm = '';
+  if (locDm) list = list.filter(g => g.dm === locDm);
+  const theoNgay = {};
+  list.forEach(g => (theoNgay[khoaNgay(g.t)] = theoNgay[khoaNgay(g.t)] || []).push(g));
+  const tongChi = list.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
+  const tongThu = list.filter(g => g.thu).reduce((a, g) => a + g.tien, 0);
+  return `<div class="row"><h1 class="sp">Giao dịch</h1>${oThang()}</div>
+  <div class="chips" style="margin-top:12px"><button class="chip ${locDm ? '' : 'on'}" data-act="loc" data-dm="">Tất cả</button>
+    ${dms.map(k => `<button class="chip ${locDm === k ? 'on' : ''}" data-act="loc" data-dm="${esc(k)}">${esc((info[k] || {}).emoji || '•')} ${esc(k)}</button>`).join('')}</div>
+  <div class="grid2" style="margin-top:10px">
+    <div class="metric m2"><div class="lab">Chi</div><div class="big" style="font-size:18px">${ngan(tongChi)}</div></div>
+    <div class="metric m1"><div class="lab">Thu</div><div class="big" style="font-size:18px">${ngan(tongThu)}</div></div></div>
+  ${Object.keys(theoNgay).length ? Object.keys(theoNgay).map(k => {
+    const ds = theoNgay[k], c = ds.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
+    const [y, m, d] = k.split('-');
+    return `<div class="day"><span>${d}/${m}</span><span>${c ? '−' + ngan(c) : ''}</span></div>
+      <div class="card" style="padding:4px 14px">${ds.map(g => dongGd(g, info)).join('')}</div>`;
+  }).join('') : '<div class="empty">Tháng này chưa có khoản nào 🍃</div>'}`;
+}
+
+function veBieuDo(){
+  const all = gds(), trong = all.filter(g => khoaThang(g.t) === thang);
+  const parts = phanDm(trong), tongChi = parts.reduce((a, p) => a + p.v, 0);
+  const n = soNgay(thang), ngay = Array(n).fill(0);
+  trong.filter(g => !g.thu).forEach(g => ngay[vn(g.t).getUTCDate() - 1] += g.tien);
+  const max = Math.max(...ngay, 1), imax = ngay.indexOf(Math.max(...ngay));
+  const laHT = thang === khoaThang(Date.now()), hn = vn(Date.now()).getUTCDate() - 1;
+  const thangs = [5, 4, 3, 2, 1, 0].map(b => doiThang(thang, -b));
+  const tongT = thangs.map(k => all.filter(g => !g.thu && khoaThang(g.t) === k).reduce((a, g) => a + g.tien, 0));
+  const maxT = Math.max(...tongT, 1);
+  const tb = tongT.filter(x => x).length ? tongT.reduce((a, b) => a + b, 0) / tongT.filter(x => x).length : 0;
+  return `<div class="row"><h1 class="sp">Biểu đồ</h1>${oThang()}</div>
+  <h2>Chi theo danh mục</h2>
+  <div class="card"><div style="display:flex;justify-content:center">${donut(parts, 170)}</div>
+    <div style="margin-top:10px">${parts.length ? parts.map(p => `<div class="lg"><span class="dot" style="background:${p.c}"></span><span class="sp">${esc(p.emoji)} ${esc(p.ten)}</span><span class="muted">${Math.round(p.v * 100 / tongChi)}%</span>&nbsp;<b style="font-weight:500;min-width:58px;text-align:right">${ngan(p.v)}</b></div>`).join('') : '<div class="muted">Chưa có khoản chi nào 🍃</div>'}</div></div>
+  <h2>Chi từng ngày</h2>
+  <div class="card"><div class="bars">${ngay.map((v, i) => `<div class="${v && i === imax ? 'hi' : laHT && i === hn ? 'today' : ''}" style="height:${v ? Math.max(v / max * 100, 3) : 1.5}%" title="${i + 1}: ${ngan(v)}"></div>`).join('')}</div>
+    <div class="axis"><span>1</span><span>${Math.ceil(n / 2)}</span><span>${n}</span></div>
+    <div class="muted" style="margin-top:6px">${ngay[imax] ? 'Tiêu nhiều nhất ngày ' + (imax + 1) + ': ' + ngan(ngay[imax]) : 'Chưa có khoản chi nào'}</div></div>
+  <h2>Xu hướng 6 tháng</h2>
+  <div class="card"><div class="mbars">${thangs.map((k, i) => `<div class="mbar ${k === thang ? 'cur' : ''}"><b>${tongT[i] ? ngan(tongT[i]) : ''}</b><i style="height:${tongT[i] ? Math.max(tongT[i] / maxT * 100, 4) : 2}%"></i><span>T${Number(k.slice(5))}</span></div>`).join('')}</div>
+    <div class="muted" style="margin-top:8px">Trung bình ${ngan(tb)}/tháng</div></div>`;
+}
+
+function veCaiDat(){
+  const cd = D.caiDat, mau = cd.mau || 'bacha', lay = String(cd.do_lay), gio = Number(cd.gio_bao_toi);
+  const nhom = l => D.danhMuc.filter(d => d.loai === l);
+  const dsDm = l => nhom(l).map(d => `<div class="set" data-act="dm" data-ten="${esc(d.ten)}"><div class="ic" style="background:var(--bg)">${esc(d.emoji)}</div><span class="sp">${esc(d.ten)}</span><span class="muted">›</span></div>`).join('');
+  return `<h1>Tùy chỉnh</h1>
+  <h2>Giao diện</h2>
+  <div class="card"><div class="set"><span class="sp">Bảng màu</span><div class="sw">${Object.keys(MAU).map(k => `<button class="${k === mau ? 'on' : ''}" style="background:${MAU[k][0]}" data-act="mau" data-k="${k}" aria-label="${MAU[k][1]}"></button>`).join('')}</div></div></div>
+  <h2>Bot Telegram</h2>
+  <div class="card">
+    <div class="set"><span class="sp">Giờ tổng kết tối</span><select data-act="gio">${Array.from({ length:24 }, (_, h) => `<option value="${h}" ${h === gio ? 'selected' : ''}>${h}:00</option>`).join('')}</select></div>
+    <div class="set"><span class="sp">Độ lầy</span><div class="seg">${[['0','Nghiêm túc'],['1','Vừa'],['2','Lầy']].map(x => `<button class="${x[0] === lay ? 'on' : ''}" data-act="lay" data-v="${x[0]}">${x[1]}</button>`).join('')}</div></div>
+    <div class="set"><div class="sp">Báo ngay khoản từ Gmail<div class="muted">Tắt thì gom vào tổng kết tối</div></div><button class="tog ${String(cd.bao_gmail_ngay).toUpperCase() === 'CO' ? 'on' : ''}" data-act="gmail" aria-label="Báo ngay khoản từ Gmail"></button></div>
+  </div>
+  <h2>Danh mục chi</h2><div class="card" style="padding:2px 14px">${dsDm('Chi')}</div>
+  <button class="addbtn" data-act="dmmoi" data-loai="Chi">＋ Thêm danh mục chi</button>
+  <h2>Danh mục thu</h2><div class="card" style="padding:2px 14px">${dsDm('Thu')}</div>
+  <button class="addbtn" data-act="dmmoi" data-loai="Thu">＋ Thêm danh mục thu</button>
+  <div class="muted" style="text-align:center;margin-top:20px">Dữ liệu nằm trong Google Sheet của cậu 🌿</div>`;
+}
+
+/* ---------- bảng trượt ---------- */
+function moSheet(html){ document.getElementById('sheet').innerHTML = `<div class="sheet-bg" data-act="dong"><div class="sheet" onclick="event.stopPropagation()"><div class="grab"></div>${html}</div></div>`; }
+function dongSheet(){ document.getElementById('sheet').innerHTML = ''; }
+
+function sheetGd(id){
+  const g = gds().find(x => x.id === id); if (!g) return;
+  const info = dmInfo();
+  const ds = D.danhMuc.filter(d => d.loai === (g.thu ? 'Thu' : 'Chi'));
+  moSheet(`<div class="row"><div class="ic" style="background:var(--bg)">${esc((info[g.dm] || {}).emoji || '•')}</div>
+    <div class="sp"><b style="font-weight:600">${esc(tenNgan(g))}</b><div class="muted">${new Date(g.t).toLocaleString('vi-VN', { timeZone:'Asia/Ho_Chi_Minh' })} · ${esc(g.vi)} · ${esc(g.nguon)}</div></div>
+    <div class="amt ${g.thu ? 'plus' : ''}" style="font-size:18px">${g.thu ? '+' : '−'}${vnd(g.tien)}</div></div>
+    ${g.ghi && g.ghi !== tenNgan(g) ? `<div class="muted" style="margin-top:8px">${esc(g.ghi)}</div>` : ''}
+    <h2>Danh mục</h2>
+    <div class="cats">${ds.map(d => `<button class="${d.ten === g.dm ? 'on' : ''}" data-act="doidm" data-id="${esc(g.id)}" data-ten="${esc(d.ten)}"><span>${esc(d.emoji)}</span>${esc(d.ten)}</button>`).join('')}</div>
+    <button class="btn soft danger" data-act="xoa" data-id="${esc(g.id)}">Xóa khoản này</button>`);
+}
+
+function sheetDm(ten, loai){
+  const d = ten ? D.danhMuc.find(x => x.ten === ten) : { ten:'', emoji:'', loai };
+  if (!d) return;
+  const macDinh = d.ten === KHAC.Chi || d.ten === KHAC.Thu;
+  moSheet(`<b style="font-weight:600;font-size:17px">${ten ? 'Sửa danh mục' : 'Danh mục ' + (loai === 'Thu' ? 'thu' : 'chi') + ' mới'}</b>
+    <div class="muted" style="margin-top:12px">Emoji</div><input class="inp" id="dmEmoji" maxlength="4" value="${esc(d.emoji)}" placeholder="🍵">
+    <div class="muted" style="margin-top:10px">Tên</div><input class="inp" id="dmTen" maxlength="30" value="${esc(d.ten)}" placeholder="Trà sữa" ${macDinh ? 'disabled' : ''}>
+    <button class="btn pri" data-act="dmluu" data-cu="${esc(d.ten)}" data-loai="${esc(d.loai)}">Lưu</button>
+    ${ten && !macDinh ? `<button class="btn soft danger" data-act="dmxoa" data-ten="${esc(d.ten)}">Xóa danh mục</button><div class="muted" style="text-align:center;margin-top:6px">Các khoản cũ sẽ chuyển về “${d.loai === 'Thu' ? KHAC.Thu : KHAC.Chi}”</div>` : ''}`);
+}
+
+function xacNhan(text, cb){ if (tg && tg.showConfirm && !DEMO) tg.showConfirm(text, ok => ok && cb()); else if (confirm(text)) cb(); }
+
+/* ---------- vẽ và sự kiện ---------- */
+const ICON = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
+  gd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+  bd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>',
+  cd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
+};
+function ve(){
+  const v = { home:veHome, gd:veGd, bd:veBieuDo, cd:veCaiDat }[tab];
+  document.getElementById('app').innerHTML = v();
+  const t = document.getElementById('tabs');
+  t.hidden = false;
+  t.innerHTML = [['home','Tổng quan'],['gd','Giao dịch'],['bd','Biểu đồ'],['cd','Tùy chỉnh']].map(x => `<button class="${tab === x[0] ? 'on' : ''}" data-act="tab" data-t="${x[0]}">${ICON[x[0]]}${x[1]}</button>`).join('');
+}
+function apDungMau(){
+  const m = (D && D.caiDat.mau) || 'bacha';
+  document.documentElement.dataset.mau = m;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  try { tg && tg.setHeaderColor && tg.setHeaderColor(bg); tg && tg.setBackgroundColor && tg.setBackgroundColor(bg); tg && tg.setBottomBarColor && tg.setBottomBarColor('#ffffff'); } catch (e) {}
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act;
+  if (a === 'tab') { tab = el.dataset.t; rung(); ve(); scrollTo(0, 0); }
+  else if (a === 'thang') { thang = doiThang(thang, Number(el.dataset.b)); rung(); ve(); }
+  else if (a === 'loc') { locDm = el.dataset.dm; rung(); ve(); }
+  else if (a === 'gd') { rung(); sheetGd(el.dataset.id); }
+  else if (a === 'dong') dongSheet();
+  else if (a === 'doidm') { dongSheet(); goi({ api:'dm', id:el.dataset.id, ten:el.dataset.ten }, 'Đã đổi danh mục'); }
+  else if (a === 'xoa') xacNhan('Xóa khoản này khỏi sổ?', () => { dongSheet(); goi({ api:'xoa', id:el.dataset.id }, 'Đã xóa'); });
+  else if (a === 'mau') { D.caiDat.mau = el.dataset.k; apDungMau(); ve(); goi({ api:'caidat', khoa:'mau', gt:el.dataset.k }, 'Đã đổi màu'); }
+  else if (a === 'lay') goi({ api:'caidat', khoa:'do_lay', gt:el.dataset.v }, 'Đã lưu');
+  else if (a === 'gmail') goi({ api:'caidat', khoa:'bao_gmail_ngay', gt:el.classList.contains('on') ? 'KHONG' : 'CO' }, 'Đã lưu');
+  else if (a === 'dm') { rung(); sheetDm(el.dataset.ten); }
+  else if (a === 'dmmoi') { rung(); sheetDm('', el.dataset.loai); }
+  else if (a === 'dmluu') {
+    const ten = document.getElementById('dmTen').value.trim(), emoji = document.getElementById('dmEmoji').value.trim();
+    if (!ten) return toast('Cậu đặt tên cho danh mục nha');
+    dongSheet(); goi({ api:'dmluu', cu:el.dataset.cu, ten, emoji, loai:el.dataset.loai }, 'Đã lưu danh mục');
+  }
+  else if (a === 'dmxoa') xacNhan('Xóa danh mục “' + el.dataset.ten + '”?', () => { dongSheet(); goi({ api:'dmxoa', ten:el.dataset.ten }, 'Đã xóa danh mục'); });
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.act === 'gio') goi({ api:'caidat', khoa:'gio_bao_toi', gt:e.target.value }, 'Đã lưu giờ tổng kết');
+});
+
+/* ---------- khởi động ---------- */
+async function batDau(){
+  if (tg) { tg.ready(); tg.expand(); }
+  if (!DEMO && !(tg && tg.initData)) {
+    document.getElementById('app').innerHTML = '<div class="center"><div style="font-size:34px">🌿</div><b>Mở app từ bot Telegram nha</b><div class="muted">Trang này chỉ chạy bên trong Telegram để giữ dữ liệu của cậu an toàn.</div></div>';
+    return;
+  }
+  try { D = await api({ api:'data' }); apDungMau(); ve(); }
+  catch (e) { document.getElementById('app').innerHTML = `<div class="center"><div style="font-size:34px">🥲</div><b>Chưa mở được sổ</b><div class="muted">${esc(e.message)}</div><button class="btn pri" style="width:auto;padding:10px 20px" onclick="location.reload()">Thử lại</button></div>`; }
+}
+
+/* ---------- dữ liệu mẫu để xem thử ngoài Telegram (?demo) ---------- */
+function demoApi(p){
+  if (!window._demo) {
+    const now = Date.now(), H = 3600e3, mk = (d, h, thu, tien, dm, vi, ghi, ng) => ['x' + Math.random().toString(36).slice(2, 8), now - d * 24 * H - h * H, thu, tien, dm, vi, ghi, ng];
+    const gd = [];
+    const mau = [['Ăn uống','CTY TNHH MINISTOP VN HCM VN',22000],['Ăn uống','cafe',45000],['Đi lại','CONG TY TNHH LE HONG THU | TT Nhien lieu',80000],['Mua sắm','shopee',150000],['Hóa đơn','TOPUP Viettel 0963992146 30000',30000],['Ăn uống','BURGER CARLS JR HCM VN',198000],['Giải trí','netflix',260000],['Đi lại','gửi xe',5000]];
+    for (let d = 0; d < 170; d++) { const k = 1 + (d * 7) % 3; for (let j = 0; j < k; j++) { const m = mau[(d * 3 + j * 5) % mau.length]; gd.push(mk(d, 2 + j * 3, 0, m[2] * (1 + (d % 4) * 0.25), m[0], j % 4 === 3 ? 'Tiền mặt' : 'VCB', m[1], j ? 'Tay' : 'Gmail')); } }
+    for (let mo = 0; mo < 6; mo++) gd.push(mk(mo * 30 + 4, 1, 1, 15000000, 'Lương', 'VCB', 'lương', 'Tay'));
+    gd.push(mk(1, 5, 1, 1200000, 'Affiliate', 'VCB', 'affiliate shopee', 'Tay'));
+    gd.push(mk(0, 1, 0, 37000, 'Khác', 'VCB', 'NGUYEN VAN A | chuyen tien', 'Gmail'));
+    window._demo = {
+      vi:[{ ten:'VCB', emoji:'🏦', soDu:4908000 }, { ten:'Tiền mặt', emoji:'💵', soDu:300000 }],
+      danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
+      caiDat:{ gio_bao_toi:21, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha' },
+      gd,
+    };
+  }
+  const X = window._demo;
+  if (p.api === 'dm') X.gd.find(r => r[0] === p.id)[4] = p.ten;
+  if (p.api === 'xoa') X.gd = X.gd.filter(r => r[0] !== p.id);
+  if (p.api === 'caidat') X.caiDat[p.khoa] = p.gt;
+  if (p.api === 'dmluu') { const d = X.danhMuc.find(x => x.ten === p.cu); if (d) { X.gd.forEach(r => r[4] === p.cu && (r[4] = p.ten)); d.ten = p.ten; d.emoji = p.emoji; } else X.danhMuc.push({ ten:p.ten, emoji:p.emoji || '•', loai:p.loai }); }
+  if (p.api === 'dmxoa') { const d = X.danhMuc.find(x => x.ten === p.ten); X.gd.forEach(r => r[4] === p.ten && (r[4] = KHAC[d.loai])); X.danhMuc = X.danhMuc.filter(x => x.ten !== p.ten); }
+  if (/tab=(\w+)/.test(location.search) && !window._tabSet) { window._tabSet = 1; tab = location.search.match(/tab=(\w+)/)[1]; }
+  return Promise.resolve(JSON.parse(JSON.stringify(X)));
+}
+
+batDau();
+</script>
+</body>
+</html>
