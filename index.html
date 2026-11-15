@@ -72,6 +72,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .tx .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
 .amt{font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
 .plus{color:var(--down)}
+.chuyen{color:var(--ink3)}
 .day{display:flex;justify-content:space-between;font-size:12px;color:var(--ink3);margin:18px 4px 6px}
 .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
@@ -153,6 +154,7 @@ const MAU = {
   anhdao:['#D9578F','Anh đào'], bien:['#2F80D1','Biển'], matcha:['#6A9A3A','Matcha'], thanchi:['#55554F','Than chì'],
 };
 const KHAC = { Chi:'Khác', Thu:'Thu khác' };
+const CHUYEN = 'Chuyển lại';
 
 let D = null;                 // dữ liệu từ Sheet
 let tab = 'home';
@@ -184,7 +186,15 @@ function dmInfo(){
   D.danhMuc.forEach(d => m[d.ten] = { emoji:d.emoji, loai:d.loai, mau:(d.ten === KHAC.Chi || d.ten === KHAC.Thu) ? '#BDBAB0' : MAU_CAT[i++ % MAU_CAT.length] });
   return m;
 }
-function tenNgan(g){ const s = String(g.ghi || '').split(' | ')[0].trim() || g.dm; return s; }
+function tenNgan(g){
+  let s = String(g.ghi || '').split(' | ')[0].trim();
+  if (!s) return g.dm;
+  s = s.replace(/_[A-Z]{2}\d+/g, ' ').replace(/^(CONG TY|CTY)(\s+(TNHH|CO PHAN|CP|MTV))*\s+/i, '')
+    .replace(/(\s+(HCM|HN|HA NOI|HO CHI MINH|VN|VIET NAM))+\s*$/i, '').replace(/\s+/g, ' ').trim();
+  if (s && s === s.toUpperCase() && /[A-Z]/.test(s)) s = s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+  else if (s) s = s.charAt(0).toUpperCase() + s.slice(1);
+  return s || g.dm;
+}
 
 /* ---------- gọi Apps Script ---------- */
 async function api(params){
@@ -221,10 +231,33 @@ function stack(parts){
 function dongLg(p, tong){
   return `<div class="lg"><span class="dot" style="background:${p.c}"></span><span class="sp">${esc(p.ten)}</span><span class="pc">${tong ? Math.round(p.v * 100 / tong) + '%' : ''}</span><b class="num">${ngan(p.v)}</b></div>`;
 }
+function loaiCuaDm(){ const m = {}; D.danhMuc.forEach(d => m[d.ten] = d.loai); return m; }
+function kieu(g, ld){
+  const t = ld[g.dm] || (g.thu ? 'Thu' : 'Chi');
+  if (t === 'Chuyen') return g.thu ? 'chuyenVao' : 'chuyenRa';
+  if (g.thu) return t === 'Chi' ? 'hoan' : 'thu';
+  return 'chi';
+}
+function tong(list){
+  const ld = loaiCuaDm(), r = { tienRa:0, thucTieu:0, thucThu:0, hoan:0, chuyenRa:0 };
+  list.forEach(g => {
+    const k = kieu(g, ld);
+    if (k === 'chi') { r.tienRa += g.tien; r.thucTieu += g.tien; }
+    else if (k === 'chuyenRa') { r.tienRa += g.tien; r.chuyenRa += g.tien; }
+    else if (k === 'hoan') { r.hoan += g.tien; r.thucTieu -= g.tien; }
+    else if (k === 'thu') r.thucThu += g.tien;
+  });
+  r.thucTieu = Math.max(0, r.thucTieu);
+  return r;
+}
 function phanDm(list){
-  const info = dmInfo(), m = {};
-  list.filter(g => !g.thu).forEach(g => m[g.dm] = (m[g.dm] || 0) + g.tien);
-  return Object.keys(m).sort((a, b) => m[b] - m[a]).map(k => ({ ten:k, v:m[k], c:(info[k] || {}).mau || '#D3D1C7', emoji:(info[k] || {}).emoji || '•' }));
+  const info = dmInfo(), ld = loaiCuaDm(), m = {};
+  list.forEach(g => {
+    const k = kieu(g, ld);
+    if (k === 'chi') m[g.dm] = (m[g.dm] || 0) + g.tien;
+    else if (k === 'hoan') m[g.dm] = (m[g.dm] || 0) - g.tien;
+  });
+  return Object.keys(m).filter(k => m[k] > 0).sort((a, b) => m[b] - m[a]).map(k => ({ ten:k, v:m[k], c:(info[k] || {}).mau || '#BDBAB0', emoji:(info[k] || {}).emoji || '•' }));
 }
 function gopTop(parts, n){
   if (parts.length <= n) return parts;
@@ -245,24 +278,24 @@ function dongGd(g, info){
     <div class="ic">${esc(d.emoji || '•')}</div>
     <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
     <div class="muted">${esc(g.dm)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })}</div></div>
-    <div class="amt ${g.thu ? 'plus' : ''}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
+    <div class="amt ${amtCls(g)}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
 }
+function amtCls(g){ const k = kieu(g, loaiCuaDm()); return k === 'chuyenRa' || k === 'chuyenVao' ? 'chuyen' : g.thu ? 'plus' : ''; }
 
 function veHome(){
   const all = gds(), info = dmInfo();
   const trong = all.filter(g => khoaThang(g.t) === thang);
-  const chi = trong.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
-  const thu = trong.filter(g => g.thu).reduce((a, g) => a + g.tien, 0);
+  const tk = tong(trong), chi = tk.thucTieu, thu = tk.thucThu;
   const ht = khoaThang(Date.now()), truoc = doiThang(thang, -1);
   const homNay = vn(Date.now()).getUTCDate();
-  const chiTruoc = all.filter(g => !g.thu && khoaThang(g.t) === truoc && (thang !== ht || vn(g.t).getUTCDate() <= homNay)).reduce((a, g) => a + g.tien, 0);
+  const chiTruoc = tong(all.filter(g => khoaThang(g.t) === truoc && (thang !== ht || vn(g.t).getUTCDate() <= homNay))).thucTieu;
   const pt = chiTruoc ? Math.round((chi - chiTruoc) * 100 / chiTruoc) : null;
-  const tong = D.vi.reduce((a, v) => a + v.soDu, 0);
+  const tongDu = D.vi.reduce((a, v) => a + v.soDu, 0);
   const top = gopTop(phanDm(trong), 5);
   const gan = all.slice().sort((a, b) => b.t - a.t).slice(0, 5);
   const gio = vn(Date.now()).getUTCHours();
   const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
-  const so = vnd(tong).replace('đ', '');
+  const so = vnd(tongDu).replace('đ', '');
   return `<div class="top"><span class="hello">${chao}</span>${oThang()}</div>
   <div class="stk" style="background:var(--peach);margin-top:18px">
     <div class="cat"><svg width="38" height="38" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></div>
@@ -271,14 +304,14 @@ function veHome(){
     <div style="font-size:12px">${D.vi.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}</div>
   </div>
   <div class="duo">
-    <div class="stk" style="background:var(--pink)"><div class="lb">Đã chi 💸</div><div class="bg num">${ngan(chi)}</div>
-      <div style="font-size:11px">${pt === null ? 'tháng này' : (pt > 0 ? '↑ ' : '↓ ') + Math.abs(pt) + '% so cùng kỳ'}</div></div>
+    <div class="stk" style="background:var(--pink)"><div class="lb">Thực tiêu 💸</div><div class="bg num">${ngan(chi)}</div>
+      <div style="font-size:11px">Tiền ra ${ngan(tk.tienRa)}${pt === null ? '' : ' · ' + (pt > 0 ? '↑' : '↓') + Math.abs(pt) + '%'}</div></div>
     <div class="stk" style="background:var(--mint)"><div class="lb">Đã thu 🌱</div><div class="bg num">${ngan(thu)}</div>
       <div style="font-size:11px">${thu ? 'giữ lại ' + Math.max(0, Math.round((thu - chi) * 100 / thu)) + '%' : 'tháng này'}</div></div>
   </div>
   <h2>Chi theo danh mục</h2>
   <div class="card">
-    <div class="sum"><span>${tenThang(thang)} · đã chi</span><b class="num">${vnd(chi)}</b></div>
+    <div class="sum"><span>${tenThang(thang)} · thực tiêu</span><b class="num">${vnd(chi)}</b></div>
     ${stack(top)}
     <div style="margin-top:8px">${top.length ? top.map(p => dongLg(p, chi)).join('') : '<div class="muted" style="padding:8px 0">Chưa có khoản chi nào 🍃</div>'}</div>
   </div>
@@ -294,18 +327,18 @@ function veGd(){
   if (locDm) list = list.filter(g => g.dm === locDm);
   const theoNgay = {};
   list.forEach(g => (theoNgay[khoaNgay(g.t)] = theoNgay[khoaNgay(g.t)] || []).push(g));
-  const tongChi = list.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
-  const tongThu = list.filter(g => g.thu).reduce((a, g) => a + g.tien, 0);
+  const tl = tong(list), tongChi = tl.thucTieu, tongThu = tl.thucThu;
   const thuTuan = ['CN','T2','T3','T4','T5','T6','T7'];
   return `<div class="top"><h1>Giao dịch</h1>${oThang()}</div>
   <div class="row" style="margin:16px 2px 12px;gap:24px">
-    <div><div class="cap">Chi</div><div class="num" style="font-size:22px;font-weight:600">${ngan(tongChi)}</div></div>
+    <div><div class="cap">Thực tiêu</div><div class="num" style="font-size:22px;font-weight:600">${ngan(tongChi)}</div></div>
+    <div><div class="cap">Tiền ra</div><div class="num" style="font-size:22px;font-weight:600;color:var(--ink3)">${ngan(tl.tienRa)}</div></div>
     <div><div class="cap">Thu</div><div class="num plus" style="font-size:22px;font-weight:600">${ngan(tongThu)}</div></div>
   </div>
   <div class="chips"><button class="chip ${locDm ? '' : 'on'}" data-act="loc" data-dm="">Tất cả</button>
     ${dms.map(k => `<button class="chip ${locDm === k ? 'on' : ''}" data-act="loc" data-dm="${esc(k)}">${esc(k)}</button>`).join('')}</div>
   ${Object.keys(theoNgay).length ? Object.keys(theoNgay).map(k => {
-    const ds = theoNgay[k], c = ds.filter(g => !g.thu).reduce((a, g) => a + g.tien, 0);
+    const ds = theoNgay[k], c = tong(ds).thucTieu;
     const [y, m, d] = k.split('-');
     const w = thuTuan[new Date(Date.UTC(+y, +m - 1, +d)).getUTCDay()];
     return `<div class="day"><span>${w}, ${d}/${m}</span><span class="num">${c ? '−' + ngan(c) : ''}</span></div>
@@ -317,10 +350,12 @@ function veBieuDo(){
   const all = gds(), trong = all.filter(g => khoaThang(g.t) === thang);
   const parts = phanDm(trong), tongChi = parts.reduce((a, p) => a + p.v, 0);
   const n = soNgay(thang), ngay = Array(n).fill(0);
-  trong.filter(g => !g.thu).forEach(g => ngay[vn(g.t).getUTCDate() - 1] += g.tien);
+  const ldb = loaiCuaDm();
+  trong.forEach(g => { const k = kieu(g, ldb); if (k === 'chi') ngay[vn(g.t).getUTCDate() - 1] += g.tien; else if (k === 'hoan') ngay[vn(g.t).getUTCDate() - 1] -= g.tien; });
+  for (let i = 0; i < n; i++) ngay[i] = Math.max(0, ngay[i]);
   const max = Math.max(...ngay, 1), imax = ngay.indexOf(Math.max(...ngay));
   const thangs = [5, 4, 3, 2, 1, 0].map(b => doiThang(thang, -b));
-  const tongT = thangs.map(k => all.filter(g => !g.thu && khoaThang(g.t) === k).reduce((a, g) => a + g.tien, 0));
+  const tongT = thangs.map(k => tong(all.filter(g => khoaThang(g.t) === k)).thucTieu);
   const maxT = Math.max(...tongT, 1);
   const coSo = tongT.filter(x => x);
   const tb = coSo.length ? coSo.reduce((a, b) => a + b, 0) / coSo.length : 0;
@@ -374,7 +409,8 @@ function dongSheet(){ document.getElementById('sheet').innerHTML = ''; }
 function sheetGd(id){
   const g = gds().find(x => x.id === id); if (!g) return;
   const info = dmInfo();
-  const ds = D.danhMuc.filter(d => d.loai === (g.thu ? 'Thu' : 'Chi'));
+  const ds = g.thu ? D.danhMuc.filter(d => d.loai === 'Thu').concat(D.danhMuc.filter(d => d.loai === 'Chuyen'), D.danhMuc.filter(d => d.loai === 'Chi'))
+                   : D.danhMuc.filter(d => d.loai === 'Chi').concat(D.danhMuc.filter(d => d.loai === 'Chuyen'));
   moSheet(`<div class="row"><div class="ic">${esc((info[g.dm] || {}).emoji || '•')}</div>
     <div class="sp"><b style="font-weight:600">${esc(tenNgan(g))}</b><div class="muted">${new Date(g.t).toLocaleString('vi-VN', { timeZone:'Asia/Ho_Chi_Minh' })} · ${esc(g.vi)} · ${esc(g.nguon)}</div></div>
     <div class="amt ${g.thu ? 'plus' : ''}" style="font-size:18px">${g.thu ? '+' : '−'}${vnd(g.tien)}</div></div>
@@ -387,7 +423,7 @@ function sheetGd(id){
 function sheetDm(ten, loai){
   const d = ten ? D.danhMuc.find(x => x.ten === ten) : { ten:'', emoji:'', loai };
   if (!d) return;
-  const macDinh = d.ten === KHAC.Chi || d.ten === KHAC.Thu;
+  const macDinh = d.ten === KHAC.Chi || d.ten === KHAC.Thu || d.ten === CHUYEN;
   moSheet(`<b style="font-weight:600;font-size:17px">${ten ? 'Sửa danh mục' : 'Danh mục ' + (loai === 'Thu' ? 'thu' : 'chi') + ' mới'}</b>
     <div class="muted" style="margin-top:12px">Emoji</div><input class="inp" id="dmEmoji" maxlength="8" value="${esc(d.emoji)}" placeholder="🍵">
     <div class="muted" style="margin-top:10px">Tên</div><input class="inp" id="dmTen" maxlength="30" value="${esc(d.ten)}" placeholder="Trà sữa" ${macDinh ? 'disabled' : ''}>
@@ -491,9 +527,12 @@ function demoApi(p){
     for (let mo = 0; mo < 6; mo++) gd.push(mk(mo * 30 + 4, 1, 1, 15000000, 'Lương', 'VCB', 'lương', 'Tay'));
     gd.push(mk(1, 5, 1, 1200000, 'Affiliate', 'VCB', 'affiliate shopee', 'Tay'));
     gd.push(mk(0, 1, 0, 37000, 'Khác', 'VCB', 'NGUYEN VAN A | chuyen tien', 'Gmail'));
+    gd.push(mk(0, 3, 1, 1000000, 'Chuyển lại', 'VCB', 'bố', 'Tay'));
+    gd.push(mk(0, 2, 0, 1000000, 'Chuyển lại', 'VCB', 'bố', 'Tay'));
+    gd.push(mk(0, 4, 1, 10000, 'Đi lại', 'Tiền mặt', 'xăng', 'Tay'));
     window._demo = {
       vi:[{ ten:'VCB', emoji:'🏦', soDu:4908000 }, { ten:'Tiền mặt', emoji:'💵', soDu:300000 }],
-      danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
+      danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰'],['Chuyển lại','Chuyen','🔁']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
       caiDat:{ gio_bao_toi:21, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha', che_do:(location.search.match(/mode=(\w+)/) || [])[1] || 'tudong' },
       gd,
     };
