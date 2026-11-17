@@ -134,6 +134,10 @@ select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5
 .acc .hd{display:flex;align-items:baseline;gap:8px}
 .acc .hd b{font-weight:600}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ts-hd{display:flex;align-items:center;gap:6px;margin:22px 2px 8px}
+.ts-hd h2{margin:0;flex:1;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.ts-mv{padding:3px 9px;border-radius:8px;background:var(--soft);font-size:12px;font-weight:600;color:var(--ink2);border:1px solid var(--line)}
+.ts-mv:disabled{opacity:.25}
 .tabs .ico{display:flex}
 .tabs svg{width:22px;height:22px}
 .tabs button.on{color:var(--ink);font-weight:500}
@@ -184,6 +188,10 @@ const CHUYEN = 'Chuyển lại';
 let D = null;                 // dữ liệu từ Sheet
 let tab = 'home';
 let thang = khoaThang(Date.now());
+const TS_MAC_DINH = ['cocau','theothang','tk','dt','the','chovay','minhno','xong'];
+let tsSort = false;
+let tsThuTu = (() => { try { const a = JSON.parse(localStorage.getItem('ts_thutu') || 'null'); if (Array.isArray(a)) return a.filter(k => TS_MAC_DINH.includes(k)).concat(TS_MAC_DINH.filter(k => !a.includes(k))); } catch (e) {} return TS_MAC_DINH.slice(); })();
+let tsDong = (() => { try { return JSON.parse(localStorage.getItem('ts_dong') || '{}') || {}; } catch (e) {} return {}; })();
 let locDm = '';
 let subGd = 'ds', subKh = 'ns', timQ = '';
 let nhap = null;              // khoản đang nhập trong bảng ＋
@@ -575,29 +583,56 @@ function veTaiSan(){
       <div class="muted" style="margin-top:2px">${phu}</div></div>`;
   };
   const xong = no.filter(d => d.conLai <= 0);
-  return `<div class="top"><h1>Tài sản</h1></div>
+  const dsMuc = {
+    cocau: {
+      t: 'Cơ cấu',
+      b: () => `<div class="card">${tongCo ? stack(coCau) + '<div style="margin-top:8px">' + coCau.map(p => dongLg(p, tongCo)).join('') + '</div>' : '<div class="muted">Chưa có dữ liệu</div>'}
+        ${ts.minhNo || ts.noThe ? `<div class="foot"><span>Phải trả${ts.noThe ? ' · nợ thẻ ' + ngan(ts.noThe) : ''}${ts.minhNo ? ' · mình nợ ' + ngan(ts.minhNo) : ''}</span><b class="num">−${ngan(ts.minhNo + ts.noThe)}</b></div>` : ''}</div>`,
+    },
+    theothang: lich.length > 1 ? {
+      t: 'Theo tháng',
+      b: () => `<div class="card"><div class="mbars">${lich.map(x => `<div class="mbar ${x.thang === htg ? 'cur' : ''}"><b class="num">${ngan(x.rong)}</b><i style="height:${cao(x.rong)}%;${x.rong < 0 ? 'background:var(--up);opacity:.6' : ''}"></i><span>T${Number(x.thang.slice(5))}</span></div>`).join('')}</div></div>`,
+    } : null,
+    tk: {
+      t: `Tiết kiệm · ${ngan(ts.tk)}`,
+      b: () => `<div class="card" style="padding:2px 16px">${(TS.tk || []).length ? TS.tk.map(dongTK).join('') : '<div class="empty" style="padding:16px">Chưa có sổ nào 🍃</div>'}</div>
+        <button class="addbtn" data-act="tkmoi">＋ Thêm sổ tiết kiệm</button>`,
+    },
+    dt: {
+      t: `Đầu tư · ${ngan(ts.dt)}${vonDT ? ` <span style="color:${ts.dt >= vonDT ? 'var(--down)' : 'var(--up)'}">${ts.dt >= vonDT ? '+' : '−'}${ngan(Math.abs(ts.dt - vonDT))}</span>` : ''}`,
+      b: () => `<div class="card" style="padding:2px 16px">${dangCo.length ? dangCo.sort((a, b) => b.giaTri - a.giaTri).map(dongDT).join('') : '<div class="empty" style="padding:16px">Chưa có khoản đầu tư nào 🍃</div>'}</div>
+        <div class="two"><button class="addbtn" data-act="dtmoi">＋ Ghi mua bán</button><button class="addbtn" data-act="laygia">↻ Lấy giá mới</button></div>
+        ${TS.giaLuc ? `<div class="muted" style="text-align:center;margin-top:8px">Giá cập nhật lúc ${vn(TS.giaLuc).toISOString().slice(11, 16)} ngày ${ddmmApp(khoaNgay(TS.giaLuc))} · tự lấy 17h mỗi ngày</div>` : ''}`,
+    },
+    the: {
+      t: `Thẻ tín dụng${noThe ? ' · ' + ngan(noThe) : ''}`,
+      b: () => `<div class="card" style="padding:2px 16px">${the.length ? the.map(dongThe).join('') : '<div class="empty">Chưa có thẻ nào 🍃</div>'}</div>
+        <button class="addbtn" data-act="themoi">＋ Thêm thẻ</button>`,
+    },
+    chovay: {
+      t: `Người khác nợ mình · ${ngan(tong(choVay))}`,
+      b: () => `<div class="card" style="padding:2px 16px">${choVay.length ? choVay.map(dongNo).join('') : '<div class="empty" style="padding:16px">Không ai nợ cậu 🍃</div>'}</div>`,
+    },
+    minhno: {
+      t: `Mình nợ · ${ngan(tong(minhNo))}`,
+      b: () => `<div class="card" style="padding:2px 16px">${minhNo.length ? minhNo.map(dongNo).join('') : '<div class="empty" style="padding:16px">Cậu không nợ ai 🌿</div>'}</div>
+        <button class="addbtn" data-act="nomoi">＋ Ghi khoản vay, cho vay</button>`,
+    },
+    xong: xong.length ? {
+      t: `Đã xong (${xong.length})`,
+      b: () => `<div class="card" style="padding:2px 16px">${xong.map(d => `<div class="tx" data-act="no" data-id="${esc(d.id)}"><div class="ic">✅</div><div class="sp"><div class="t">${esc(d.ten)}</div><div class="muted">${d.chieu === 'no' ? 'Mình vay' : 'Cho vay'} ${ngan(d.goc)}</div></div></div>`).join('')}</div>`,
+    } : null,
+  };
+  const cacMuc = tsThuTu.filter(k => dsMuc[k]);
+  const coMo = cacMuc.some(k => !tsDong[k]);
+  const than = cacMuc.map((k, idx) => {
+    const m = dsMuc[k], mo = !tsSort && !tsDong[k];
+    return `<div class="ts-hd"><h2 data-act="${tsSort ? '' : 'tstog'}" data-k="${k}"><span>${tsSort ? '☰' : (mo ? '▾' : '▸')}</span><span>${m.t}</span></h2>${tsSort ? `<button class="ts-mv" data-act="tsmv" data-k="${k}" data-d="-1" ${idx === 0 ? 'disabled' : ''}>↑</button><button class="ts-mv" data-act="tsmv" data-k="${k}" data-d="1" ${idx === cacMuc.length - 1 ? 'disabled' : ''}>↓</button>` : ''}</div>${mo ? m.b() : ''}`;
+  }).join('');
+  return `<div class="top"><h1>Tài sản</h1><div class="row" style="gap:6px">${tsSort ? '' : `<button class="pill" data-act="tsall">${coMo ? 'Thu gọn' : 'Mở hết'}</button>`}<button class="pill" data-act="tssort">${tsSort ? '✓ Xong' : '↕ Sắp xếp'}</button></div></div>
   <div class="stk" style="background:var(--mint);margin-top:16px"><div class="lb">Tài sản ròng</div><div class="bg num">${vnd(rong).replace('đ', '')}<span style="font-size:18px">đ</span></div>
     <div style="font-size:12px">${moc ? (rong >= moc.rong ? '↑ +' : '↓ −') + ngan(Math.abs(rong - moc.rong)) + ' so với tháng ' + Number(moc.thang.slice(5)) : 'Tiền + tiết kiệm + đầu tư + được nợ − các khoản nợ'}</div></div>
-  <h2>Cơ cấu</h2>
-  <div class="card">${tongCo ? stack(coCau) + '<div style="margin-top:8px">' + coCau.map(p => dongLg(p, tongCo)).join('') + '</div>' : '<div class="muted">Chưa có dữ liệu</div>'}
-    ${ts.minhNo || ts.noThe ? `<div class="foot"><span>Phải trả${ts.noThe ? ' · nợ thẻ ' + ngan(ts.noThe) : ''}${ts.minhNo ? ' · mình nợ ' + ngan(ts.minhNo) : ''}</span><b class="num">−${ngan(ts.minhNo + ts.noThe)}</b></div>` : ''}</div>
-  ${lich.length > 1 ? `<h2>Theo tháng</h2><div class="card"><div class="mbars">${lich.map(x => `<div class="mbar ${x.thang === htg ? 'cur' : ''}"><b class="num">${ngan(x.rong)}</b><i style="height:${cao(x.rong)}%;${x.rong < 0 ? 'background:var(--up);opacity:.6' : ''}"></i><span>T${Number(x.thang.slice(5))}</span></div>`).join('')}</div></div>` : ''}
-  <h2>Tiết kiệm · ${ngan(ts.tk)}</h2>
-  <div class="card" style="padding:2px 16px">${(TS.tk || []).length ? TS.tk.map(dongTK).join('') : '<div class="empty" style="padding:16px">Chưa có sổ nào 🍃</div>'}</div>
-  <button class="addbtn" data-act="tkmoi">＋ Thêm sổ tiết kiệm</button>
-  <h2>Đầu tư · ${ngan(ts.dt)}${vonDT ? ` <span style="color:${ts.dt >= vonDT ? 'var(--down)' : 'var(--up)'}">${ts.dt >= vonDT ? '+' : '−'}${ngan(Math.abs(ts.dt - vonDT))}</span>` : ''}</h2>
-  <div class="card" style="padding:2px 16px">${dangCo.length ? dangCo.sort((a, b) => b.giaTri - a.giaTri).map(dongDT).join('') : '<div class="empty" style="padding:16px">Chưa có khoản đầu tư nào 🍃</div>'}</div>
-  <div class="two"><button class="addbtn" data-act="dtmoi">＋ Ghi mua bán</button><button class="addbtn" data-act="laygia">↻ Lấy giá mới</button></div>
-  ${TS.giaLuc ? `<div class="muted" style="text-align:center;margin-top:8px">Giá cập nhật lúc ${vn(TS.giaLuc).toISOString().slice(11, 16)} ngày ${ddmmApp(khoaNgay(TS.giaLuc))} · tự lấy 17h mỗi ngày</div>` : ''}
-  <h2>Thẻ tín dụng</h2>
-  <div class="card" style="padding:2px 16px">${the.length ? the.map(dongThe).join('') : '<div class="empty">Chưa có thẻ nào 🍃</div>'}</div>
-  <button class="addbtn" data-act="themoi">＋ Thêm thẻ</button>
-  <h2>Người khác nợ mình · ${ngan(tong(choVay))}</h2>
-  <div class="card" style="padding:2px 16px">${choVay.length ? choVay.map(dongNo).join('') : '<div class="empty" style="padding:16px">Không ai nợ cậu 🍃</div>'}</div>
-  <h2>Mình nợ · ${ngan(tong(minhNo))}</h2>
-  <div class="card" style="padding:2px 16px">${minhNo.length ? minhNo.map(dongNo).join('') : '<div class="empty" style="padding:16px">Cậu không nợ ai 🌿</div>'}</div>
-  <button class="addbtn" data-act="nomoi">＋ Ghi khoản vay, cho vay</button>
-  ${xong.length ? `<h2>Đã xong</h2><div class="card" style="padding:2px 16px">${xong.map(d => `<div class="tx" data-act="no" data-id="${esc(d.id)}"><div class="ic">✅</div><div class="sp"><div class="t">${esc(d.ten)}</div><div class="muted">${d.chieu === 'no' ? 'Mình vay' : 'Cho vay'} ${ngan(d.goc)}</div></div></div>`).join('')}</div>` : ''}
+  ${than}
   <div class="muted" style="text-align:center;margin-top:14px">Nhắn bot: <b>vay 2tr Nam</b> · <b>Nam trả 500k</b> · <b>200k cafe ${esc((the[0] || {}).tat || 'tpb')}</b></div>`;
 }
 function chonVi(id, chon){ return `<select id="${id}">${D.vi.filter(v => !v.the).map(v => `<option ${v.ten === chon ? 'selected' : ''}>${esc(v.ten)}</option>`).join('')}</select>`; }
@@ -870,6 +905,20 @@ document.addEventListener('click', e => {
   else if (a === 'dkhuy') xacNhan('Hủy theo dõi gói này?', () => { dongSheet(); goi({ api:'dkhuy', id:el.dataset.id }, 'Đã hủy gói'); });
   else if (a === 'the') { rung(); sheetThe(el.dataset.ten); }
   else if (a === 'themoi') { rung(); sheetThe(''); }
+  else if (a === 'tstog') { const k = el.dataset.k; if (!k) return; tsDong[k] = !tsDong[k]; try { localStorage.setItem('ts_dong', JSON.stringify(tsDong)); } catch (e) {} rung(); ve(); }
+  else if (a === 'tsall') { const coMo = [...document.querySelectorAll('.ts-hd h2[data-k]')].some(h => !tsDong[h.dataset.k]); document.querySelectorAll('.ts-hd h2[data-k]').forEach(h => { tsDong[h.dataset.k] = coMo; }); try { localStorage.setItem('ts_dong', JSON.stringify(tsDong)); } catch (e) {} rung(); ve(); }
+  else if (a === 'tssort') { tsSort = !tsSort; rung(); ve(); }
+  else if (a === 'tsmv') {
+    const k = el.dataset.k, d = Number(el.dataset.d);
+    const vis = [...document.querySelectorAll('.ts-hd [data-act=tsmv][data-d="1"], .ts-hd [data-act=tsmv][data-d="-1"]')].map(b => b.dataset.k).filter((v, i, arr) => arr.indexOf(v) === i);
+    const vi = vis.indexOf(k), vj = vi + d;
+    if (vi >= 0 && vj >= 0 && vj < vis.length) {
+      const i = tsThuTu.indexOf(vis[vi]), j = tsThuTu.indexOf(vis[vj]);
+      [tsThuTu[i], tsThuTu[j]] = [tsThuTu[j], tsThuTu[i]];
+      try { localStorage.setItem('ts_thutu', JSON.stringify(tsThuTu)); } catch (e) {}
+      rung(); ve();
+    }
+  }
   else if (a === 'no') { rung(); sheetNo(el.dataset.id); }
   else if (a === 'nomoi') { rung(); sheetNo(''); }
   else if (a === 'nochieu') { el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung(); }
