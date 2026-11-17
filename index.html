@@ -107,7 +107,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 select{font:inherit;border:0;background:var(--soft);border-radius:10px;padding:5px 10px;color:var(--ink)}
 .addbtn{width:100%;margin-top:12px;padding:12px;border-radius:14px;background:var(--card);color:var(--ink);font-weight:600;font-size:14px;border:2px solid var(--edge);box-shadow:3px 3px 0 var(--edge)}
 .pill{background:var(--soft);color:var(--ink);border-radius:20px;padding:6px 12px;font-size:13px;font-weight:500}
-.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:8px 0 calc(6px + env(safe-area-inset-bottom));z-index:5}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink3)}
 .tabs .ico{display:flex}
 .tabs svg{width:22px;height:22px}
@@ -373,6 +373,59 @@ function veBieuDo(){
     <div class="muted" style="margin-top:8px">Trung bình ${ngan(tb)} mỗi tháng</div></div>`;
 }
 
+/* ---------- Định kỳ ---------- */
+const CK = { tuan:'tuần', thang:'tháng', quy:'quý', nam:'năm' };
+function msNgay(k){ const a = k.split('-').map(Number); return Date.UTC(a[0], a[1] - 1, a[2]); }
+function conNgayApp(k){ return Math.round((msNgay(k) - msNgay(khoaNgay(Date.now()))) / 864e5); }
+function moiThangApp(d){ return d.chuKy === 'tuan' ? d.tien * 52 / 12 : d.chuKy === 'quy' ? d.tien / 3 : d.chuKy === 'nam' ? d.tien / 12 : d.tien; }
+function tienApp(s){
+  const m = String(s).toLowerCase().replace(/\s/g, '').match(/^(\d+(?:[.,]\d+)?)(k|tr)?$/);
+  if (!m) return 0;
+  let n = m[2] ? parseFloat(m[1].replace(',', '.')) : Number(m[1].replace(/[.,]/g, ''));
+  return Math.round(n * (m[2] === 'k' ? 1e3 : m[2] === 'tr' ? 1e6 : 1));
+}
+function veDinhKy(){
+  const ds = (D.dk || []).slice().sort((a, b) => a.tiep < b.tiep ? -1 : 1);
+  const bat = ds.filter(d => d.trangThai === 'Bật');
+  const tong = bat.reduce((a, d) => a + moiThangApp(d), 0);
+  const info = dmInfo();
+  return `<div class="top"><h1>Định kỳ</h1></div>
+  <div class="stk" style="background:var(--mint);margin-top:16px"><div class="lb">Mỗi tháng tốn khoảng</div><div class="bg num">${ngan(tong)}</div>
+    <div style="font-size:12px">${bat.length} khoản đang theo dõi</div></div>
+  <h2>Sắp tới</h2>
+  <div class="card" style="padding:2px 16px">${ds.length ? ds.map(d => {
+    const c = conNgayApp(d.tiep);
+    return `<div class="tx" data-act="dk" data-id="${esc(d.id)}"><div class="ic">${esc((info[d.dm] || {}).emoji || '🔁')}</div>
+      <div class="sp"><div class="t">${esc(d.ten)}</div><div class="muted">${ngan(d.tien)}/${CK[d.chuKy]} · ${d.tiep.slice(8)}/${d.tiep.slice(5, 7)}${d.trangThai === 'Tắt' ? ' · đang tắt' : ''}</div></div>
+      <div class="amt" style="font-size:13px;${c <= 1 && d.trangThai === 'Bật' ? 'color:var(--up)' : 'color:var(--ink3)'}">${c > 0 ? 'còn ' + c + ' ngày' : c === 0 ? 'hôm nay' : 'quá ' + (-c) + ' ngày'}</div></div>`;
+  }).join('') : '<div class="empty">Chưa có gói nào 🍃<br>Bấm nút dưới hoặc nhắn bot <b>/them icloud 25k ngày 15</b></div>'}</div>
+  <button class="addbtn" data-act="dkmoi">＋ Thêm gói</button>
+  <div class="muted" style="text-align:center;margin-top:14px">Gói Apple tự cập nhật từ email biên lai</div>`;
+}
+function sheetDK(id){
+  const d = id ? (D.dk || []).find(x => x.id === id) : null;
+  if (id && !d) return;
+  const cd = D.caiDat;
+  const ky = d ? d.chuKy : 'thang';
+  const nhac = (d ? d.nhac : String(cd.nhac_mac_dinh || '1,0')).split(',');
+  const gio = d ? d.gio : Number(cd.gio_nhac || 9);
+  const tiep = d ? d.tiep : khoaNgay(Date.now() + 30 * 864e5);
+  moSheet(`<b style="font-weight:600;font-size:18px">${d ? 'Sửa gói' : 'Gói mới'}</b>
+    <div class="muted" style="margin-top:12px">Tên</div><input class="inp" id="dkTen" maxlength="40" value="${esc(d ? d.ten : '')}" placeholder="YouTube Premium">
+    <div class="muted" style="margin-top:10px">Số tiền mỗi kỳ</div><input class="inp" id="dkTien" value="${d ? d.tien : ''}" placeholder="79k">
+    <div class="muted" style="margin-top:10px">Chu kỳ</div>
+    <div class="seg" style="margin-top:6px">${Object.keys(CK).map(k => `<button class="${k === ky ? 'on' : ''}" data-act="dkky" data-v="${k}" style="flex:1">${CK[k]}</button>`).join('')}</div>
+    <div class="muted" style="margin-top:10px">Gia hạn tiếp</div><input class="inp" type="date" id="dkTiep" value="${tiep}">
+    <div class="muted" style="margin-top:10px">Nhắc trước</div>
+    <div class="chips" style="margin-top:6px">${['7','3','1','0'].map(n => `<button class="chip ${nhac.includes(n) ? 'on' : ''}" data-act="dknhac" data-v="${n}">${n === '0' ? 'Đúng ngày' : n + ' ngày'}</button>`).join('')}</div>
+    <div class="set"><span class="sp">Giờ nhắc</span><select id="dkGio">${Array.from({ length:24 }, (_, h) => `<option value="${h}" ${h === gio ? 'selected' : ''}>${h}:00</option>`).join('')}</select></div>
+    <div class="set"><span class="sp">Trả từ ví</span><select id="dkVi">${D.vi.map(v => `<option ${d && d.vi === v.ten ? 'selected' : ''}>${esc(v.ten)}</option>`).join('')}</select></div>
+    <div class="set"><span class="sp">Đang theo dõi</span><button class="tog ${!d || d.trangThai === 'Bật' ? 'on' : ''}" data-act="dkbat" aria-label="Bật tắt theo dõi"></button></div>
+    <button class="btn pri" data-act="dkluu" data-id="${esc(d ? d.id : '')}">Lưu</button>
+    ${d ? `<button class="btn soft" data-act="dktra" data-id="${esc(d.id)}">✅ Đã trả kỳ này</button>
+    <button class="btn soft danger" data-act="dkhuy" data-id="${esc(d.id)}">🚫 Hủy gói</button>` : ''}`);
+}
+
 function veCaiDat(){
   const cd = D.caiDat, mau = cd.mau || 'bacha', lay = String(cd.do_lay), gio = Number(cd.gio_bao_toi), cheDo = cd.che_do || 'tudong';
   const nhom = l => D.danhMuc.filter(d => d.loai === l);
@@ -439,14 +492,15 @@ const ICON = {
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg>',
   gd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
   bd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>',
+  dk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
   cd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
 };
 function ve(){
-  const v = { home:veHome, gd:veGd, bd:veBieuDo, cd:veCaiDat }[tab];
+  const v = { home:veHome, gd:veGd, bd:veBieuDo, dk:veDinhKy, cd:veCaiDat }[tab];
   document.getElementById('app').innerHTML = v();
   const t = document.getElementById('tabs');
   t.hidden = false;
-  t.innerHTML = [['home','Tổng quan'],['gd','Giao dịch'],['bd','Biểu đồ'],['cd','Tùy chỉnh']].map(x => `<button class="${tab === x[0] ? 'on' : ''}" data-act="tab" data-t="${x[0]}"><span class="ico">${ICON[x[0]]}</span>${x[1]}</button>`).join('');
+  t.innerHTML = [['home','Tổng quan'],['gd','Giao dịch'],['bd','Biểu đồ'],['dk','Định kỳ'],['cd','Tùy chỉnh']].map(x => `<button class="${tab === x[0] ? 'on' : ''}" data-act="tab" data-t="${x[0]}"><span class="ico">${ICON[x[0]]}</span>${x[1]}</button>`).join('');
 }
 function laNenToi(){
   const cheDo = (D && D.caiDat.che_do) || 'tudong';
@@ -471,6 +525,26 @@ document.addEventListener('click', e => {
   else if (a === 'loc') { locDm = el.dataset.dm; rung(); ve(); }
   else if (a === 'gd') { rung(); sheetGd(el.dataset.id); }
   else if (a === 'dong') { if (e.target === el) dongSheet(); }
+  else if (a === 'dk') { rung(); sheetDK(el.dataset.id); }
+  else if (a === 'dkmoi') { rung(); sheetDK(''); }
+  else if (a === 'dkky') { el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung(); }
+  else if (a === 'dknhac' || a === 'dkbat') { el.classList.toggle('on'); rung(); }
+  else if (a === 'dkluu') {
+    const sh = document.getElementById('sheet');
+    const ten = document.getElementById('dkTen').value.trim(), tien = tienApp(document.getElementById('dkTien').value);
+    const tiep = document.getElementById('dkTiep').value;
+    if (!ten) return toast('Cậu đặt tên cho gói nha');
+    if (!tien) return toast('Số tiền chưa đúng, ví dụ 79k');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tiep)) return toast('Chọn ngày gia hạn nha');
+    const nhac = [...sh.querySelectorAll('[data-act=dknhac].on')].map(b => b.dataset.v).join(',') || '0';
+    const ky = (sh.querySelector('[data-act=dkky].on') || {}).dataset.v || 'thang';
+    const bat = sh.querySelector('[data-act=dkbat]').classList.contains('on');
+    const gio = document.getElementById('dkGio').value, vi = document.getElementById('dkVi').value;
+    dongSheet();
+    goi({ api:'dkluu', id:el.dataset.id, ten, tien, chuKy:ky, tiep, nhac, gio, vi, trangThai:bat ? 'Bật' : 'Tắt' }, 'Đã lưu gói');
+  }
+  else if (a === 'dktra') { dongSheet(); goi({ api:'dktra', id:el.dataset.id }, 'Đã ghi khoản trả kỳ này'); }
+  else if (a === 'dkhuy') xacNhan('Hủy theo dõi gói này?', () => { dongSheet(); goi({ api:'dkhuy', id:el.dataset.id }, 'Đã hủy gói'); });
   else if (a === 'doidm') { dongSheet(); goi({ api:'dm', id:el.dataset.id, ten:el.dataset.ten }, 'Đã đổi danh mục'); }
   else if (a === 'xoa') xacNhan('Xóa khoản này khỏi sổ?', () => { dongSheet(); goi({ api:'xoa', id:el.dataset.id }, 'Đã xóa'); });
   else if (a === 'mau') { D.caiDat.mau = el.dataset.k; apDungMau(); ve(); goi({ api:'caidat', khoa:'mau', gt:el.dataset.k }, 'Đã đổi màu'); }
@@ -534,13 +608,22 @@ function demoApi(p){
     gd.push(mk(0, 4, 1, 10000, 'Đi lại', 'Tiền mặt', 'xăng', 'Tay'));
     window._demo = {
       vi:[{ ten:'VCB', emoji:'🏦', soDu:4908000 }, { ten:'Tiền mặt', emoji:'💵', soDu:300000 }],
-      danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰'],['Chuyển lại','Chuyen','🔁']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
-      caiDat:{ gio_bao_toi:21, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha', che_do:(location.search.match(/mode=(\w+)/) || [])[1] || 'tudong' },
+      danhMuc:[['Ăn uống','Chi','🍜'],['Đi lại','Chi','🛵'],['Mua sắm','Chi','🛍'],['Hóa đơn','Chi','🧾'],['Giải trí','Chi','🎮'],['Sức khỏe','Chi','💊'],['Học tập','Chi','📚'],['Gia đình','Chi','🏠'],['Hiếu hỉ & quà','Chi','🎁'],['Chuyển khoản','Chi','🔁'],['Khác','Chi','📦'],['Lương','Thu','💼'],['Affiliate','Thu','🔗'],['Thưởng','Thu','🎉'],['Thu khác','Thu','💰'],['Chuyển lại','Chuyen','🔁'],['Gói đăng ký','Chi','📺']].map(x => ({ ten:x[0], loai:x[1], emoji:x[2] })),
+      dk:[
+        { id:'dk1', ten:'Apple Music', tien:19000, chuKy:'thang', tiep:khoaNgay(now + 2 * 24 * H), vi:'VCB', dm:'Gói đăng ký', nhac:'1,0', gio:9, trangThai:'Bật' },
+        { id:'dk2', ten:'iCloud+ 50GB', tien:25000, chuKy:'thang', tiep:khoaNgay(now + 12 * 24 * H), vi:'VCB', dm:'Gói đăng ký', nhac:'1,0', gio:9, trangThai:'Bật' },
+        { id:'dk3', ten:'Claude Pro', tien:499000, chuKy:'thang', tiep:khoaNgay(now + 20 * 24 * H), vi:'VCB', dm:'Gói đăng ký', nhac:'3,1,0', gio:8, trangThai:'Bật' },
+        { id:'dk4', ten:'Tên miền', tien:300000, chuKy:'nam', tiep:khoaNgay(now + 200 * 24 * H), vi:'VCB', dm:'Gói đăng ký', nhac:'7,1', gio:9, trangThai:'Tắt' },
+      ],
+      caiDat:{ gio_bao_toi:21, nhac_mac_dinh:'1,0', gio_nhac:9, do_lay:1, bao_gmail_ngay:'KHONG', mau:(location.search.match(/mau=(\w+)/) || [])[1] || 'bacha', che_do:(location.search.match(/mode=(\w+)/) || [])[1] || 'tudong' },
       gd,
     };
   }
   const X = window._demo;
   if (p.api === 'dm') X.gd.find(r => r[0] === p.id)[4] = p.ten;
+  if (p.api === 'dkluu') { const d = X.dk.find(x => x.id === p.id); const o = { ten:p.ten, tien:+p.tien, chuKy:p.chuKy, tiep:p.tiep, nhac:p.nhac, gio:+p.gio, vi:p.vi, trangThai:p.trangThai, dm:'Gói đăng ký' }; if (d) Object.assign(d, o); else X.dk.push(Object.assign({ id:'dk' + Math.random() }, o)); }
+  if (p.api === 'dktra') { const d = X.dk.find(x => x.id === p.id); const a = d.tiep.split('-').map(Number); d.tiep = khoaNgay(Date.UTC(a[0], a[1], a[2]) - 7 * 3600e3 + 3600e3); }
+  if (p.api === 'dkhuy') X.dk = X.dk.filter(x => x.id !== p.id);
   if (p.api === 'xoa') X.gd = X.gd.filter(r => r[0] !== p.id);
   if (p.api === 'caidat') X.caiDat[p.khoa] = p.gt;
   if (p.api === 'dmluu') { const d = X.danhMuc.find(x => x.ten === p.cu); if (d) { X.gd.forEach(r => r[4] === p.cu && (r[4] = p.ten)); d.ten = p.ten; d.emoji = p.emoji; } else X.danhMuc.push({ ten:p.ten, emoji:p.emoji || '•', loai:p.loai }); }
