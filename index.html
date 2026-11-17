@@ -408,7 +408,7 @@ function veDinhKy(){
     return `<div class="tx" data-act="dk" data-id="${esc(d.id)}"><div class="ic">${esc((info[d.dm] || {}).emoji || '🔁')}</div>
       <div class="sp"><div class="t">${esc(d.ten)}</div><div class="muted">${ngan(d.tien)}/${CK[d.chuKy]} · ${d.tiep.slice(8)}/${d.tiep.slice(5, 7)}${d.trangThai === 'Tắt' ? ' · đang tắt' : ''}</div></div>
       <div class="amt" style="font-size:13px;${c <= 1 && d.trangThai === 'Bật' ? 'color:var(--up)' : 'color:var(--ink3)'}">${c > 0 ? 'còn ' + c + ' ngày' : c === 0 ? 'hôm nay' : 'quá ' + (-c) + ' ngày'}</div></div>`;
-  }).join('') : '<div class="empty">Chưa có gói nào 🍃<br>Bấm nút dưới hoặc nhắn bot <b>/them icloud 25k ngày 15</b></div>'}</div>
+  }).join('') : '<div class="empty">Chưa có gói nào 🍃<br>Bấm nút dưới hoặc nhắn bot <b>/goi icloud 25k ngày 15</b></div>'}</div>
   <button class="addbtn" data-act="dkmoi">＋ Thêm gói</button>
   <div class="muted" style="text-align:center;margin-top:14px">Gói Apple tự cập nhật từ email biên lai</div>`;
 }
