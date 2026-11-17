@@ -446,7 +446,31 @@ function veTaiSan(){
   const mo = no.filter(d => d.conLai > 0);
   const choVay = mo.filter(d => d.chieu === 'chovay'), minhNo = mo.filter(d => d.chieu === 'no');
   const tong = l => l.reduce((a, d) => a + d.conLai, 0);
-  const rong = tien - noThe + tong(choVay) - tong(minhNo);
+  const TS = D.ts || { tk:[], dt:[], taiSan:null, taiSanThang:[] };
+  const ts = TS.taiSan || { tien, tk:0, dt:0, duocNo:tong(choVay), minhNo:tong(minhNo), noThe, rong:tien - noThe + tong(choVay) - tong(minhNo), laiDT:0 };
+  const rong = ts.rong;
+  const htg = khoaThang(Date.now());
+  const lich = (TS.taiSanThang || []).filter(x => x.thang < htg).slice(-5).concat([{ thang:htg, rong }]);
+  const moc = lich.length > 1 ? lich[lich.length - 2] : null;
+  const coCau = [['Tiền', Math.max(0, ts.tien), '#5FA8D3'], ['Tiết kiệm', ts.tk, '#4CC29A'], ['Đầu tư', ts.dt, '#E9B949'], ['Được nợ', ts.duocNo, '#D987B5']].filter(x => x[1] > 0).map(x => ({ ten:x[0], v:x[1], c:x[2] }));
+  const tongCo = coCau.reduce((a, p) => a + p.v, 0);
+  const vals = lich.map(x => x.rong), maxT = Math.max(...vals), minT = Math.min(...vals);
+  const day = minT > 0 ? minT - (maxT - minT) * 0.6 : Math.min(0, minT), cao = v => Math.max((v - day) / Math.max(maxT - day, 1) * 100, 4);
+  const dongTK = t => {
+    const tong = Math.max(1, msNgay(t.dao) - msNgay(t.gui)), da = Math.min(100, Math.max(0, Math.round((msNgay(khoaNgay(Date.now())) - msNgay(t.gui)) * 100 / tong)));
+    return `<div class="acc" data-act="tk" data-id="${esc(t.id)}"><div class="hd"><span>🏦</span><b class="sp">${esc(t.nh)}</b><b class="num">${ngan(t.goc)}</b></div>
+      <div class="prog"><i style="width:${da}%"></i></div>
+      <div class="muted">${String(t.lai).replace('.', ',')}% · ${t.ky} tháng · đáo hạn ${ddmmApp(t.dao)} (${khiApp(t.dao)}) · lãi ${ngan(t.laiDenNay)}/${ngan(t.laiCaKy)}</div></div>`;
+  };
+  const dangCo = (TS.dt || []).filter(h => h.sl > 0);
+  const dongDT = h => {
+    const ic = h.loai === 'vang' ? '🥇' : h.loai === 'usd' ? '💵' : h.loai === 'quy' ? '🧺' : '📈';
+    const dv = { quy:'ccq', cp:'cp', vang:'chỉ', usd:'USD' }[h.loai];
+    return `<div class="tx" data-act="dt" data-ma="${esc(h.ma)}"><div class="ic">${ic}</div>
+      <div class="sp"><div class="t">${esc(h.ten)} <span class="muted">${h.sl} ${dv}</span></div><div class="muted">vốn ${ngan(h.giaVon)} → ${ngan(h.gia)}</div></div>
+      <div style="text-align:right"><div class="amt num">${ngan(h.giaTri)}</div><div class="num" style="font-size:12px;color:${h.lai >= 0 ? 'var(--down)' : 'var(--up)'}">${h.lai >= 0 ? '+' : '−'}${Math.abs(h.pt).toFixed(1).replace('.', ',')}%</div></div></div>`;
+  };
+  const vonDT = dangCo.reduce((a, h) => a + h.von, 0);
   const dongNo = d => {
     const pt = d.goc ? Math.min(100, Math.round(d.daTra * 100 / d.goc)) : 0;
     const gap = d.han && conNgayApp(d.han) <= 3;
@@ -465,7 +489,18 @@ function veTaiSan(){
   const xong = no.filter(d => d.conLai <= 0);
   return `<div class="top"><h1>Tài sản</h1></div>
   <div class="stk" style="background:var(--mint);margin-top:16px"><div class="lb">Tài sản ròng</div><div class="bg num">${vnd(rong).replace('đ', '')}<span style="font-size:18px">đ</span></div>
-    <div style="font-size:12px">Tiền ${ngan(tien)}${noThe ? ' · nợ thẻ ' + ngan(noThe) : ''}${choVay.length ? ' · được nợ ' + ngan(tong(choVay)) : ''}${minhNo.length ? ' · mình nợ ' + ngan(tong(minhNo)) : ''}</div></div>
+    <div style="font-size:12px">${moc ? (rong >= moc.rong ? '↑ +' : '↓ −') + ngan(Math.abs(rong - moc.rong)) + ' so với tháng ' + Number(moc.thang.slice(5)) : 'Tiền + tiết kiệm + đầu tư + được nợ − các khoản nợ'}</div></div>
+  <h2>Cơ cấu</h2>
+  <div class="card">${tongCo ? stack(coCau) + '<div style="margin-top:8px">' + coCau.map(p => dongLg(p, tongCo)).join('') + '</div>' : '<div class="muted">Chưa có dữ liệu</div>'}
+    ${ts.minhNo || ts.noThe ? `<div class="foot"><span>Phải trả${ts.noThe ? ' · nợ thẻ ' + ngan(ts.noThe) : ''}${ts.minhNo ? ' · mình nợ ' + ngan(ts.minhNo) : ''}</span><b class="num">−${ngan(ts.minhNo + ts.noThe)}</b></div>` : ''}</div>
+  ${lich.length > 1 ? `<h2>Theo tháng</h2><div class="card"><div class="mbars">${lich.map(x => `<div class="mbar ${x.thang === htg ? 'cur' : ''}"><b class="num">${ngan(x.rong)}</b><i style="height:${cao(x.rong)}%;${x.rong < 0 ? 'background:var(--up);opacity:.6' : ''}"></i><span>T${Number(x.thang.slice(5))}</span></div>`).join('')}</div></div>` : ''}
+  <h2>Tiết kiệm · ${ngan(ts.tk)}</h2>
+  <div class="card" style="padding:2px 16px">${(TS.tk || []).length ? TS.tk.map(dongTK).join('') : '<div class="empty" style="padding:16px">Chưa có sổ nào 🍃</div>'}</div>
+  <button class="addbtn" data-act="tkmoi">＋ Thêm sổ tiết kiệm</button>
+  <h2>Đầu tư · ${ngan(ts.dt)}${vonDT ? ` <span style="color:${ts.dt >= vonDT ? 'var(--down)' : 'var(--up)'}">${ts.dt >= vonDT ? '+' : '−'}${ngan(Math.abs(ts.dt - vonDT))}</span>` : ''}</h2>
+  <div class="card" style="padding:2px 16px">${dangCo.length ? dangCo.sort((a, b) => b.giaTri - a.giaTri).map(dongDT).join('') : '<div class="empty" style="padding:16px">Chưa có khoản đầu tư nào 🍃</div>'}</div>
+  <div class="two"><button class="addbtn" data-act="dtmoi">＋ Ghi mua bán</button><button class="addbtn" data-act="laygia">↻ Lấy giá mới</button></div>
+  ${TS.giaLuc ? `<div class="muted" style="text-align:center;margin-top:8px">Giá cập nhật lúc ${vn(TS.giaLuc).toISOString().slice(11, 16)} ngày ${ddmmApp(khoaNgay(TS.giaLuc))} · tự lấy 17h mỗi ngày</div>` : ''}
   <h2>Thẻ tín dụng</h2>
   <div class="card" style="padding:2px 16px">${the.length ? the.map(dongThe).join('') : '<div class="empty">Chưa có thẻ nào 🍃</div>'}</div>
   <button class="addbtn" data-act="themoi">＋ Thêm thẻ</button>
@@ -523,6 +558,51 @@ function sheetNo(id){
       <div><div class="muted" style="margin-top:10px">Lãi %/năm</div><input class="inp" id="nsLai" inputmode="decimal" value="${d.lai || ''}" placeholder="0"></div></div>
     <div class="muted" style="margin-top:10px">Ghi chú</div><input class="inp" id="nsGhi" maxlength="200" value="${esc(d.ghiChu || '')}">
     <button class="btn soft" data-act="nosua" data-id="${esc(d.id)}">Lưu thông tin</button>`);
+}
+const LOAI_APP = { quy:'Quỹ', cp:'Cổ phiếu', vang:'Vàng', usd:'USD' };
+function sheetTK(id){
+  const t = id ? ((D.ts || {}).tk || []).find(x => x.id === id) : null;
+  if (id && !t) return;
+  const form = (x) => `<div class="two"><div><div class="muted" style="margin-top:10px">Ngân hàng</div><input class="inp" id="tkNh" maxlength="30" value="${esc(x ? x.nh : 'VCB')}"></div>
+      <div><div class="muted" style="margin-top:10px">${x ? 'Gốc' : 'Số tiền'}</div><input class="inp" id="tkGoc" value="${x ? x.goc : ''}" placeholder="10tr" ${x ? 'disabled' : ''}></div></div>
+    <div class="two"><div><div class="muted" style="margin-top:10px">Kỳ hạn (tháng)</div><input class="inp" id="tkKy" type="number" min="1" max="120" value="${x ? x.ky : 6}"></div>
+      <div><div class="muted" style="margin-top:10px">Lãi %/năm</div><input class="inp" id="tkLai" inputmode="decimal" value="${x ? x.lai : ''}" placeholder="5,2"></div></div>
+    <div class="muted" style="margin-top:10px">Ngày gửi</div><input class="inp" id="tkGui" type="date" value="${x ? x.gui : khoaNgay(Date.now())}">`;
+  if (!t) {
+    moSheet(`<b style="font-weight:600;font-size:18px">Sổ tiết kiệm mới</b>${form(null)}
+      <div class="set"><span class="sp">Lấy tiền từ ví</span>${chonVi('tkVi', 'VCB')}</div>
+      <div class="set"><span class="sp">Sổ đã có từ trước<div class="muted">Bật thì không trừ tiền ví</div></span><button class="tog" data-act="tkcosan" aria-label="Sổ đã có từ trước"></button></div>
+      <button class="btn pri" data-act="tkluu">Lưu sổ</button>`);
+    return;
+  }
+  const den = khoaNgay(Date.now()) >= t.dao;
+  moSheet(`<b style="font-weight:600;font-size:18px">${esc(t.nh)} · ${ngan(t.goc)}</b>
+    <div class="muted" style="margin-top:4px">Đáo hạn ${ddmmApp(t.dao)}/${t.dao.slice(0, 4)} · lãi tạm tính ${vnd(t.laiDenNay)} · cả kỳ ${vnd(t.laiCaKy)}</div>
+    <div class="card" style="margin-top:12px;box-shadow:none;border-width:1.5px">
+      <div class="two"><div><div class="muted">Lãi thực nhận</div><input class="inp" id="tkLaiThat" placeholder="${den ? ngan(t.laiCaKy) : 'tớ tự tính'}"></div>
+        <div><div class="muted">Về ví</div><div style="margin-top:6px">${chonVi('tkViVe', t.vi)}</div></div></div>
+      <button class="btn pri" data-act="tkrut" data-id="${esc(t.id)}">💰 Rút sổ${den ? '' : ' (trước hạn)'}</button>
+      ${den ? `<button class="btn soft" data-act="tktt" data-id="${esc(t.id)}">🔁 Tái tục (gộp lãi vào gốc)</button>` : ''}</div>
+    ${form(t)}
+    <button class="btn soft" data-act="tksua" data-id="${esc(t.id)}">Lưu thay đổi</button>`);
+}
+function sheetDT(ma){
+  const h = ma ? ((D.ts || {}).dt || []).find(x => x.ma === ma) : null;
+  const loai = h ? h.loai : 'cp';
+  moSheet(`<b style="font-weight:600;font-size:18px">${h ? esc(h.ten) : 'Ghi mua bán'}</b>
+    ${h ? `<div class="muted" style="margin-top:4px">${h.sl} ${{ quy:'ccq', cp:'cp', vang:'chỉ', usd:'USD' }[h.loai]} · vốn ${vnd(h.von)} · đáng giá ${vnd(h.giaTri)}${h.daChot ? ' · đã chốt ' + (h.daChot >= 0 ? 'lãi ' : 'lỗ ') + ngan(Math.abs(h.daChot)) : ''}</div>
+    <div class="card" style="margin-top:12px;box-shadow:none;border-width:1.5px"><div class="muted">Giá hiện tại (sửa nếu sai)</div>
+      <div class="two"><input class="inp" id="dtGiaTay" value="${h.gia}"><button class="btn soft" style="margin-top:6px" data-act="giatay" data-ma="${esc(h.ma)}">Lưu giá</button></div></div>` : ''}
+    <div class="seg" style="margin-top:14px">${[['mua','Mua'],['ban','Bán'],['co','Có sẵn']].map((x, i) => `<button class="${i === 0 ? 'on' : ''}" data-act="dtviec" data-v="${x[0]}" style="flex:1">${x[1]}</button>`).join('')}</div>
+    ${h ? `<input type="hidden" id="dtMa" value="${esc(h.ma)}"><input type="hidden" id="dtLoai" value="${esc(h.loai)}">` : `
+    <div class="seg" style="margin-top:10px">${Object.keys(LOAI_APP).map(k => `<button class="${k === loai ? 'on' : ''}" data-act="dtloai" data-v="${k}" style="flex:1">${LOAI_APP[k]}</button>`).join('')}</div>
+    <div class="muted" style="margin-top:10px" id="dtMaNhan">Mã</div><input class="inp" id="dtMa" maxlength="10" placeholder="FPT, DCDS…" style="text-transform:uppercase">
+    <select id="dtVang" style="display:none;margin-top:6px;width:100%"><option value="VANG_NHAN">Vàng nhẫn</option><option value="VANG_SJC">Vàng miếng SJC</option></select>`}
+    <div class="two"><div><div class="muted" style="margin-top:10px">Số lượng <span id="dtDv">${{ quy:'(ccq)', cp:'(cp)', vang:'(chỉ)', usd:'(USD)' }[loai]}</span></div><input class="inp" id="dtSl" inputmode="decimal" placeholder="100"></div>
+      <div><div class="muted" style="margin-top:10px">Giá mỗi đơn vị</div><input class="inp" id="dtGia" placeholder="49,5k" value="${h ? h.gia : ''}"></div></div>
+    <div class="two"><div><div class="muted" style="margin-top:10px">Phí (nếu có)</div><input class="inp" id="dtPhi" placeholder="0"></div>
+      <div><div class="muted" style="margin-top:10px">Ví</div><div style="margin-top:6px">${chonVi('dtVi', 'VCB')}</div></div></div>
+    <button class="btn pri" data-act="dtluu">Ghi lại</button>`);
 }
 function soApp(id){ return Number(String(document.getElementById(id).value).replace(',', '.')) || 0; }
 
@@ -684,6 +764,52 @@ document.addEventListener('click', e => {
     if (!ten) return toast('Cần tên người');
     dongSheet(); goi({ api:'nosua', id:el.dataset.id, ten, han:document.getElementById('nsHan').value, lai:soApp('nsLai'), ghiChu:document.getElementById('nsGhi').value }, 'Đã lưu');
   }
+  else if (a === 'tk') { rung(); sheetTK(el.dataset.id); }
+  else if (a === 'tkmoi') { rung(); sheetTK(''); }
+  else if (a === 'tkcosan') { el.classList.toggle('on'); rung(); }
+  else if (a === 'tkluu') {
+    const goc = tienApp(document.getElementById('tkGoc').value), ky = soApp('tkKy'), lai = soApp('tkLai');
+    if (!goc) return toast('Số tiền chưa đúng, ví dụ 10tr');
+    if (!ky || !lai) return toast('Cần kỳ hạn và lãi suất');
+    const coSan = document.querySelector('[data-act=tkcosan]').classList.contains('on') ? '1' : '';
+    dongSheet(); goi({ api:'tkmoi', nh:document.getElementById('tkNh').value.trim(), goc, ky, lai, gui:document.getElementById('tkGui').value, vi:document.getElementById('tkVi').value, coSan }, 'Đã lưu sổ');
+  }
+  else if (a === 'tkrut') xacNhan('Rút sổ này?', () => {
+    const v = document.getElementById('tkLaiThat').value.trim();
+    const lai = v ? tienApp(v) : '';
+    const vi = document.getElementById('tkViVe').value;
+    dongSheet(); goi({ api:'tkrut', id:el.dataset.id, lai, vi }, 'Đã rút sổ');
+  });
+  else if (a === 'tktt') { const lai = soApp('tkLai'); dongSheet(); goi({ api:'tktt', id:el.dataset.id, lai }, 'Đã tái tục'); }
+  else if (a === 'tksua') {
+    const ky = soApp('tkKy'), lai = soApp('tkLai');
+    if (!ky || !lai) return toast('Cần kỳ hạn và lãi suất');
+    dongSheet(); goi({ api:'tksua', id:el.dataset.id, nh:document.getElementById('tkNh').value.trim(), ky, lai, gui:document.getElementById('tkGui').value }, 'Đã lưu');
+  }
+  else if (a === 'dt') { rung(); sheetDT(el.dataset.ma); }
+  else if (a === 'dtmoi') { rung(); sheetDT(''); }
+  else if (a === 'dtviec') { el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung(); }
+  else if (a === 'dtloai') {
+    el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung();
+    const v = el.dataset.v;
+    document.getElementById('dtMa').style.display = v === 'vang' || v === 'usd' ? 'none' : '';
+    document.getElementById('dtMaNhan').style.display = v === 'vang' || v === 'usd' ? 'none' : '';
+    document.getElementById('dtVang').style.display = v === 'vang' ? '' : 'none';
+    document.getElementById('dtDv').textContent = { quy:'(ccq)', cp:'(cp)', vang:'(chỉ)', usd:'(USD)' }[v];
+  }
+  else if (a === 'dtluu') {
+    const sh = document.getElementById('sheet');
+    const viec = (sh.querySelector('[data-act=dtviec].on') || {}).dataset.v || 'mua';
+    const loaiEl = sh.querySelector('[data-act=dtloai].on');
+    const loai = loaiEl ? loaiEl.dataset.v : document.getElementById('dtLoai').value;
+    const ma = loai === 'vang' && loaiEl ? document.getElementById('dtVang').value : loai === 'usd' && loaiEl ? 'USD' : document.getElementById('dtMa').value.trim().toUpperCase();
+    const sl = soApp('dtSl'), gia = tienApp(document.getElementById('dtGia').value);
+    if (!ma) return toast('Nhập mã nha, ví dụ FPT');
+    if (!sl || !gia) return toast('Cần số lượng và giá');
+    dongSheet(); goi({ api:'dtghi', viec, ma, loai, sl, gia, phi:tienApp(document.getElementById('dtPhi').value || '0'), vi:document.getElementById('dtVi').value }, 'Đã ghi');
+  }
+  else if (a === 'giatay') { const gia = tienApp(document.getElementById('dtGiaTay').value); if (!gia) return toast('Giá chưa đúng'); dongSheet(); goi({ api:'giatay', ma:el.dataset.ma, gia }, 'Đã lưu giá'); }
+  else if (a === 'laygia') goi({ api:'laygia' }, 'Đã lấy giá mới');
   else if (a === 'doidm') { dongSheet(); goi({ api:'dm', id:el.dataset.id, ten:el.dataset.ten }, 'Đã đổi danh mục'); }
   else if (a === 'xoa') xacNhan('Xóa khoản này khỏi sổ?', () => { dongSheet(); goi({ api:'xoa', id:el.dataset.id }, 'Đã xóa'); });
   else if (a === 'mau') { D.caiDat.mau = el.dataset.k; apDungMau(); ve(); goi({ api:'caidat', khoa:'mau', gt:el.dataset.k }, 'Đã đổi màu'); }
@@ -748,6 +874,16 @@ function demoApi(p){
     window._demo = {
       vi:[{ ten:'VCB', emoji:'🏦', soDu:4908000 }, { ten:'Tiền mặt', emoji:'💵', soDu:300000 }, { ten:'TPBank', emoji:'💳', soDu:-4250000, the:true, tat:'tpb' }],
       the:[{ ten:'TPBank', emoji:'💳', tat:'tpb', hanMuc:20000000, sk:25, ht:10, lai:30, duNo:4250000, conHanMuc:15750000, saoKe:khoaNgay(now - 22 * 24 * H), hanTra:khoaNgay(now + 3 * 24 * H), duNoSK:3800000, phaiTra:3800000, toiThieu:190000, laiUoc:90000 }],
+      ts:{
+        tk:[{ id:'tk1', nh:'VCB', goc:50000000, lai:5.2, ky:6, gui:khoaNgay(now - 60 * 24 * H), dao:khoaNgay(now + 122 * 24 * H), vi:'VCB', laiCaKy:1300000, laiDenNay:427000 },
+            { id:'tk2', nh:'TPBank', goc:20000000, lai:4.5, ky:3, gui:khoaNgay(now - 88 * 24 * H), dao:khoaNgay(now + 2 * 24 * H), vi:'VCB', laiCaKy:225000, laiDenNay:217000 }],
+        dt:[{ ma:'DCDS', ten:'DCDS', loai:'quy', sl:120, giaVon:85000, gia:92133, giaTri:11055960, von:10200000, lai:855960, pt:8.4, daChot:0 },
+            { ma:'VANG_NHAN', ten:'Vàng nhẫn', loai:'vang', sl:2, giaVon:13700000, gia:13240000, giaTri:26480000, von:27400000, lai:-920000, pt:-3.4, daChot:0 },
+            { ma:'FPT', ten:'FPT', loai:'cp', sl:100, giaVon:45000, gia:49450, giaTri:4945000, von:4500000, lai:445000, pt:9.9, daChot:0 }],
+        taiSan:{ tien:5208000, tk:70644000, dt:42480960, duocNo:2000000, minhNo:2000000, noThe:4250000, rong:114082960, laiDT:380960 },
+        taiSanThang:[{ thang:doiThang(khoaThang(now), -3), rong:98000000 }, { thang:doiThang(khoaThang(now), -2), rong:104500000 }, { thang:doiThang(khoaThang(now), -1), rong:109200000 }],
+        giaLuc:now - 3 * H,
+      },
       no:[
         { id:'no1', ten:'Nam', chieu:'chovay', lai:0, han:khoaNgay(now + 12 * 24 * H), goc:2000000, daTra:500000, conLai:1500000, laiDaTra:0, laiDuTinh:0, ghiChu:'' },
         { id:'no2', ten:'Hà', chieu:'chovay', lai:0, han:'', goc:500000, daTra:0, conLai:500000, laiDaTra:0, laiDuTinh:0, ghiChu:'' },
