@@ -192,7 +192,7 @@ const TS_MAC_DINH = ['cocau','theothang','tk','dt','the','chovay','minhno','xong
 let tsSort = false;
 let tsThuTu = (() => { try { const a = JSON.parse(localStorage.getItem('ts_thutu') || 'null'); if (Array.isArray(a)) return a.filter(k => TS_MAC_DINH.includes(k)).concat(TS_MAC_DINH.filter(k => !a.includes(k))); } catch (e) {} return TS_MAC_DINH.slice(); })();
 let tsDong = (() => { try { return JSON.parse(localStorage.getItem('ts_dong') || '{}') || {}; } catch (e) {} return {}; })();
-let locDm = '', locVi = '';
+let locDm = '', locVi = '', kyDm = 'thang';
 let viMacDinh = (() => { try { return localStorage.getItem('vi_macdinh') || ''; } catch (e) {} return ''; })();
 let viChon = viMacDinh;
 let subGd = 'ds', subKh = 'dk', timQ = '';
@@ -339,7 +339,19 @@ function veHome(){
   const tongDu = viThuong.reduce((a, v) => a + v.soDu, 0);
   const curVi = viThuong.find(v => v.ten === viChon) || viThuong.find(v => v.ten === viMacDinh) || viThuong[0] || { ten:'', emoji:'', soDu:tongDu };
   const viConLai = viThuong.filter(v => v.ten !== curVi.ten);
-  const top = gopTop(phanDm(trong), 5);
+  const curKy = thang === ht ? kyDm : 'thang';
+  const ngayStr = khoaNgay(Date.now());
+  const dVn = vn(Date.now()), thuNay = (dVn.getUTCDay() + 6) % 7;
+  const dauTuan = Date.UTC(dVn.getUTCFullYear(), dVn.getUTCMonth(), dVn.getUTCDate() - thuNay);
+  const tuanStr0 = new Date(dauTuan).toISOString().slice(0, 10), tuanStr1 = new Date(dauTuan + 6 * 864e5).toISOString().slice(0, 10);
+  const dmList = curKy === 'ngay' ? all.filter(g => khoaNgay(g.t) === ngayStr)
+    : curKy === 'tuan' ? all.filter(g => { const k = khoaNgay(g.t); return k >= tuanStr0 && k <= tuanStr1; })
+    : trong;
+  const chiDm = tong(dmList).thucTieu;
+  const top = gopTop(phanDm(dmList), 5);
+  const dmNhan = curKy === 'ngay' ? 'Hôm nay ' + ddmmApp(ngayStr) + ' · chi tiêu'
+    : curKy === 'tuan' ? 'Tuần này (' + ddmmApp(tuanStr0) + ' – ' + ddmmApp(tuanStr1) + ') · chi tiêu'
+    : tenThang(thang) + ' · chi tiêu';
   const gan = all.slice().sort((a, b) => b.t - a.t).slice(0, 5);
   const gio = vn(Date.now()).getUTCHours();
   const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
@@ -365,11 +377,14 @@ function veHome(){
     ${thanh(ns.da, ns.ns)}
     <div style="margin-top:6px">${ns.ds.slice().sort((a, b) => b.da / b.ns - a.da / a.ns).slice(0, 3).map(x => `<div class="lg"><span>${esc(x.emoji)}</span><span class="sp">${esc(x.ten)}</span><span class="pc" style="${x.da > x.ns ? 'color:var(--danger)' : ''}">${Math.round(x.da * 100 / x.ns)}%</span><b class="num">${ngan(x.da)}</b></div>`).join('')}</div>
   </div>` : ''}
-  <h2>Chi theo danh mục</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 2px 8px">
+    <h2 style="margin:0">Chi theo danh mục</h2>
+    ${thang === ht ? `<div class="seg" style="padding:2px">${[['ngay','Ngày'],['tuan','Tuần'],['thang','Tháng']].map(x => `<button class="${curKy === x[0] ? 'on' : ''}" data-act="kydm" data-v="${x[0]}" style="padding:3px 9px;font-size:12px">${x[1]}</button>`).join('')}</div>` : ''}
+  </div>
   <div class="card">
-    <div class="sum"><span>${tenThang(thang)} · chi tiêu</span><b class="num">${vnd(chi)}</b></div>
+    <div class="sum"><span>${dmNhan}</span><b class="num">${vnd(chiDm)}</b></div>
     ${stack(top)}
-    <div style="margin-top:8px">${top.length ? top.map(p => dongLg(p, chi)).join('') : '<div class="muted" style="padding:8px 0">Chưa có khoản chi nào 🍃</div>'}</div>
+    <div style="margin-top:8px">${top.length ? top.map(p => dongLg(p, chiDm)).join('') : '<div class="muted" style="padding:8px 0">Chưa có khoản chi nào 🍃</div>'}</div>
   </div>
   <h2>Gần đây</h2>
   <div class="card" style="padding:2px 16px">${gan.length ? gan.map(g => dongGd(g, info)).join('') : '<div class="empty">Sổ còn trống, nhắn bot <b>50k cafe</b> thử nha</div>'}</div>`;
@@ -408,8 +423,10 @@ function phanDsGd(){
     <div><div class="cap">Tiền ra</div><div class="num" style="font-size:22px;font-weight:600;color:var(--ink3)">${ngan(tl.tienRa)}</div></div>
     <div><div class="cap">Thu</div><div class="num plus" style="font-size:22px;font-weight:600">${ngan(tl.thucThu)}</div></div>
   </div>
-  <div class="chips"><button class="chip ${locDm ? '' : 'on'}" data-act="loc" data-dm="">Tất cả</button>
-    ${dms.map(k => `<button class="chip ${locDm === k ? 'on' : ''}" data-act="loc" data-dm="${esc(k)}">${esc(k)}</button>`).join('')}</div>`;
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+    <button class="chip ${locDm ? 'on' : ''}" data-act="chondm">${locDm ? esc(((info[locDm] || {}).emoji || '') + ' ' + locDm) : '🏷️ Danh mục: Tất cả'} ▾</button>
+    ${locDm ? `<button class="chip" data-act="loc" data-dm="">✕ Bỏ lọc</button>` : ''}
+  </div>`;
   }
   const theoNgay = {};
   list.forEach(g => (theoNgay[khoaNgay(g.t)] = theoNgay[khoaNgay(g.t)] || []).push(g));
@@ -781,6 +798,16 @@ function veCaiDat(){
 }
 
 /* ---------- bảng trượt ---------- */
+function sheetChonDm(){
+  const info = dmInfo();
+  const list = gds().filter(g => khoaThang(g.t) === thang && (!locVi || g.vi === locVi));
+  const dms = [...new Set(list.map(g => g.dm))];
+  moSheet(`<b style="font-weight:600;font-size:18px">Lọc theo danh mục</b>
+    <div class="cats c4" style="margin-top:14px">
+      <button class="${locDm ? '' : 'on'}" data-act="loc" data-dm=""><span>✨</span>Tất cả</button>
+      ${dms.map(k => `<button class="${locDm === k ? 'on' : ''}" data-act="loc" data-dm="${esc(k)}"><span>${esc((info[k] || {}).emoji || '•')}</span>${esc(k)}</button>`).join('')}
+    </div>`);
+}
 function moSheet(html){ document.getElementById('sheet').innerHTML = `<div class="sheet-bg" data-act="dong"><div class="sheet"><div class="grab"></div>${html}</div></div>`; }
 function dongSheet(){ document.getElementById('sheet').innerHTML = ''; }
 
@@ -897,7 +924,9 @@ document.addEventListener('click', e => {
   const a = el.dataset.act;
   if (a === 'tab') { tab = el.dataset.t; rung(); ve(); scrollTo(0, 0); }
   else if (a === 'thang') { thang = doiThang(thang, Number(el.dataset.b)); rung(); ve(); }
-  else if (a === 'loc') { locDm = el.dataset.dm; rung(); ve(); }
+  else if (a === 'loc') { locDm = el.dataset.dm; dongSheet(); rung(); ve(); }
+  else if (a === 'chondm') { rung(); sheetChonDm(); }
+  else if (a === 'kydm') { kyDm = el.dataset.v; rung(); ve(); }
   else if (a === 'locvi') { locVi = el.dataset.v; rung(); ve(); }
   else if (a === 'vichon') { viChon = el.dataset.v; rung(); ve(); }
   else if (a === 'vimd') { viMacDinh = el.dataset.v; viChon = viMacDinh; try { localStorage.setItem('vi_macdinh', viMacDinh); } catch (e) {} rung(); ve(); toast('Đã đặt ví mặc định'); }
