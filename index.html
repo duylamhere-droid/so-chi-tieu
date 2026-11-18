@@ -192,8 +192,10 @@ const TS_MAC_DINH = ['cocau','theothang','tk','dt','the','chovay','minhno','xong
 let tsSort = false;
 let tsThuTu = (() => { try { const a = JSON.parse(localStorage.getItem('ts_thutu') || 'null'); if (Array.isArray(a)) return a.filter(k => TS_MAC_DINH.includes(k)).concat(TS_MAC_DINH.filter(k => !a.includes(k))); } catch (e) {} return TS_MAC_DINH.slice(); })();
 let tsDong = (() => { try { return JSON.parse(localStorage.getItem('ts_dong') || '{}') || {}; } catch (e) {} return {}; })();
-let locDm = '';
-let subGd = 'ds', subKh = 'ns', timQ = '';
+let locDm = '', locVi = '';
+let viMacDinh = (() => { try { return localStorage.getItem('vi_macdinh') || ''; } catch (e) {} return ''; })();
+let viChon = viMacDinh;
+let subGd = 'ds', subKh = 'dk', timQ = '';
 let nhap = null;              // khoản đang nhập trong bảng ＋
 
 /* ---------- tiện ích ---------- */
@@ -308,18 +310,25 @@ function oThang(){
     <span>Tháng ${Number(thang.slice(5))}</span>
     <button data-act="thang" data-b="1" aria-label="Tháng sau" ${thang >= ht ? 'disabled' : ''}>›</button></div>`;
 }
+function tenVi(v){ return v && v.ten === 'VCB' ? 'Ngân hàng' : (v ? v.ten : ''); }
+function viChips(){
+  const ds = D.vi || [];
+  if (ds.length <= 1) return '';
+  return `<div class="chips" style="margin-top:12px"><button class="chip ${locVi ? '' : 'on'}" data-act="locvi" data-v="">Tất cả</button>${ds.map(v => `<button class="chip ${locVi === v.ten ? 'on' : ''}" data-act="locvi" data-v="${esc(v.ten)}">${esc(v.emoji + ' ' + (v.the ? 'Thẻ ' + v.ten : tenVi(v)))}</button>`).join('')}</div>`;
+}
 function dongGd(g, info){
-  const d = info[g.dm] || {};
+  const d = info[g.dm] || {}, v = (D.vi || []).find(x => x.ten === g.vi);
+  const viTxt = v ? v.emoji + ' ' + (v.the ? 'Thẻ' : tenVi(v)) : g.vi;
   return `<div class="tx" data-act="gd" data-id="${esc(g.id)}">
     <div class="ic">${esc(d.emoji || '•')}</div>
     <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
-    <div class="muted">${esc(g.dm)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })}</div></div>
+    <div class="muted">${esc(g.dm)} · ${esc(viTxt)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })}</div></div>
     <div class="amt ${amtCls(g)}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
 }
 function amtCls(g){ const k = kieu(g, loaiCuaDm()); return k === 'chuyenRa' || k === 'chuyenVao' || k === 'noiBo' ? 'chuyen' : g.thu ? 'plus' : ''; }
 
 function veHome(){
-  const all = gds(), info = dmInfo();
+  const raw = gds(), all = locVi ? raw.filter(g => g.vi === locVi) : raw, info = dmInfo();
   const trong = all.filter(g => khoaThang(g.t) === thang);
   const tk = tong(trong), chi = tk.thucTieu, thu = tk.thucThu;
   const ht = khoaThang(Date.now()), truoc = doiThang(thang, -1);
@@ -328,19 +337,22 @@ function veHome(){
   const pt = chiTruoc ? Math.round((chi - chiTruoc) * 100 / chiTruoc) : null;
   const viThuong = D.vi.filter(v => !v.the), noThe = D.vi.filter(v => v.the).reduce((a, v) => a + Math.max(0, -v.soDu), 0);
   const tongDu = viThuong.reduce((a, v) => a + v.soDu, 0);
+  const curVi = viThuong.find(v => v.ten === viChon) || viThuong.find(v => v.ten === viMacDinh) || viThuong[0] || { ten:'', emoji:'', soDu:tongDu };
+  const viConLai = viThuong.filter(v => v.ten !== curVi.ten);
   const top = gopTop(phanDm(trong), 5);
   const gan = all.slice().sort((a, b) => b.t - a.t).slice(0, 5);
   const gio = vn(Date.now()).getUTCHours();
   const chao = gio < 11 ? 'Chào buổi sáng ☀️' : gio < 18 ? 'Chào cậu 🌿' : 'Tối vui nha 🌙';
-  const so = vnd(tongDu).replace('đ', '');
+  const so = vnd(curVi.soDu).replace('đ', '');
   const ns = nganSach(thang);
   return `<div class="top"><span class="hello">${chao}</span><div class="row" style="gap:8px">${oThang()}<button class="gear" data-act="tab" data-t="cd" aria-label="Tùy chỉnh">${ICON.cd}</button></div></div>
   <div class="stk" style="background:var(--peach);margin-top:18px">
     <div class="cat"><svg width="38" height="38" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></div>
-    <div class="lb">Ví của cậu</div>
+    ${viThuong.length > 1 ? `<div class="seg" style="display:inline-flex;background:rgba(43,38,34,.08);padding:2px;margin-bottom:4px">${viThuong.map(v => `<button class="${v.ten === curVi.ten ? 'on' : ''}" data-act="vichon" data-v="${esc(v.ten)}" style="padding:3px 9px;font-size:12px">${esc(tenVi(v))}</button>`).join('')}</div>` : ''}
     <div class="bg num">${so}<span style="font-size:18px">đ</span></div>
-    <div style="font-size:12px">${viThuong.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}${noThe ? ' · 💳 nợ ' + ngan(noThe) : ''}</div>
+    <div style="font-size:11px;opacity:.62">${viConLai.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}${viConLai.length ? ' · ' : ''}💰 ${ngan(tongDu)}${noThe ? ' · 💳 −' + ngan(noThe) : ''}</div>
   </div>
+  ${viChips()}
   <div class="duo">
     <div class="stk" style="background:var(--pink)"><div class="lb">Chi tiêu 💸</div><div class="bg num">${ngan(chi)}</div>
       <div style="font-size:11px">Tiền ra ${ngan(tk.tienRa)}${pt === null ? '' : ' · ' + (pt > 0 ? '↑' : '↓') + Math.abs(pt) + '%'}</div></div>
@@ -366,8 +378,8 @@ function veHome(){
 function segHtml(act, cur, ds){ return `<div class="seg big2">${ds.map(x => `<button class="${cur === x[0] ? 'on' : ''}" data-act="${act}" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>`; }
 function veGd(){
   const seg = segHtml('subgd', subGd, [['ds','Danh sách'],['bd','Biểu đồ']]);
-  if (subGd === 'bd') return `<div class="top"><h1>Giao dịch</h1>${oThang()}</div>${seg}${veBieuDo()}`;
-  return `<div class="top"><h1>Giao dịch</h1>${oThang()}</div>${seg}
+  if (subGd === 'bd') return `<div class="top"><h1>Giao dịch</h1>${oThang()}</div>${seg}${viChips()}${veBieuDo()}`;
+  return `<div class="top"><h1>Giao dịch</h1>${oThang()}</div>${seg}${viChips()}
   <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg>
     <input id="tim" type="search" enterkeyhint="search" autocomplete="off" placeholder="Tìm ghi chú, danh mục, số tiền" value="${esc(timQ)}"></label>
   <div id="dsgd">${phanDsGd()}</div>`;
@@ -375,7 +387,7 @@ function veGd(){
 function boDau(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase(); }
 function timGd(q){
   const k = boDau(q.trim()), so = tienApp(q.trim());
-  return gds().filter(g => (so && (g.tien === so || (so < 1000 && g.tien === so * 1000))) || boDau([g.ghi, tenNgan(g), g.dm, g.vi].join(' ')).includes(k))
+  return (locVi ? gds().filter(g => g.vi === locVi) : gds()).filter(g => (so && (g.tien === so || (so < 1000 && g.tien === so * 1000))) || boDau([g.ghi, tenNgan(g), g.dm, g.vi].join(' ')).includes(k))
     .sort((a, b) => b.t - a.t).slice(0, 100);
 }
 function phanDsGd(){
@@ -386,7 +398,7 @@ function phanDsGd(){
     list = timGd(tim);
     dau = `<div class="muted" style="margin:14px 2px 0">${list.length ? list.length + (list.length >= 100 ? '+' : '') + ' kết quả · chi tiêu ' + ngan(tong(list).thucTieu) : ''}</div>`;
   } else {
-    list = gds().filter(g => khoaThang(g.t) === thang).sort((a, b) => b.t - a.t);
+    list = gds().filter(g => khoaThang(g.t) === thang && (!locVi || g.vi === locVi)).sort((a, b) => b.t - a.t);
     const dms = [...new Set(list.map(g => g.dm))];
     if (locDm && !dms.includes(locDm)) locDm = '';
     if (locDm) list = list.filter(g => g.dm === locDm);
@@ -411,7 +423,7 @@ function phanDsGd(){
 }
 
 function veBieuDo(){
-  const all = gds(), trong = all.filter(g => khoaThang(g.t) === thang);
+  const raw = gds(), all = locVi ? raw.filter(g => g.vi === locVi) : raw, trong = all.filter(g => khoaThang(g.t) === thang);
   const parts = phanDm(trong), tongChi = parts.reduce((a, p) => a + p.v, 0);
   const n = soNgay(thang), ngay = Array(n).fill(0);
   const ldb = loaiCuaDm();
@@ -474,7 +486,7 @@ function nganSach(k){
 function thanh(da, ns){ const pt = ns ? da * 100 / ns : 0; return `<div class="prog ${pt > 100 ? 'over' : pt >= 80 ? 'warn' : ''}"><i style="width:${Math.min(100, pt)}%"></i></div>`; }
 function veKeHoach(){
   return `<div class="top"><h1>Kế hoạch</h1>${subKh === 'ns' ? oThang() : ''}</div>
-  ${segHtml('subkh', subKh, [['ns','Ngân sách'],['dk','Định kỳ']])}${subKh === 'ns' ? veNganSach() : veDinhKy()}`;
+  ${segHtml('subkh', subKh, [['dk','Định kỳ'],['ns','Ngân sách']])}${subKh === 'ns' ? veNganSach() : veDinhKy()}`;
 }
 function veNganSach(){
   const ns = nganSach(thang), ht = khoaThang(Date.now());
@@ -548,7 +560,9 @@ function veTaiSan(){
   const htg = khoaThang(Date.now());
   const lich = (TS.taiSanThang || []).filter(x => x.thang < htg).slice(-5).concat([{ thang:htg, rong }]);
   const moc = lich.length > 1 ? lich[lich.length - 2] : null;
-  const coCau = [['Tiền', Math.max(0, ts.tien), '#5FA8D3'], ['Tiết kiệm', ts.tk, '#4CC29A'], ['Đầu tư', ts.dt, '#E9B949'], ['Được nợ', ts.duocNo, '#D987B5']].filter(x => x[1] > 0).map(x => ({ ten:x[0], v:x[1], c:x[2] }));
+  const viMau = ['#5FA8D3','#6CC3BE','#7C83E8'];
+  const viCo = D.vi.filter(v => !v.the && v.soDu > 0).map((v, i) => [tenVi(v), v.soDu, viMau[i % viMau.length]]);
+  const coCau = viCo.concat([['Tiết kiệm', ts.tk, '#4CC29A'], ['Đầu tư', ts.dt, '#E9B949'], ['Được nợ', ts.duocNo, '#D987B5']]).filter(x => x[1] > 0).map(x => ({ ten:x[0], v:x[1], c:x[2] }));
   const tongCo = coCau.reduce((a, p) => a + p.v, 0);
   const vals = lich.map(x => x.rong), maxT = Math.max(...vals), minT = Math.min(...vals);
   const day = minT > 0 ? minT - (maxT - minT) * 0.6 : Math.min(0, minT), cao = v => Math.max((v - day) / Math.max(maxT - day, 1) * 100, 4);
@@ -738,10 +752,13 @@ function veCaiDat(){
   else if (homeStatus === 'missed' || homeStatus === 'unknown') nhanh = `<div class="set"><div class="sp">Thêm vào màn hình chính<div class="muted">Bấm biểu tượng là vào thẳng app</div></div><button class="pill" data-act="home">Thêm</button></div>`;
   else nhanh = `<div class="set"><div class="sp">Link mở thẳng app<div class="muted">Dán vào app Phím tắt của iPhone để tạo biểu tượng</div></div><button class="pill" data-act="copy">Sao chép</button></div>`;
   const bat = k => String(cd[k] || 'CO').toUpperCase() !== 'KHONG', gioKy = Number(cd.gio_bao_ky || 21);
+  const viThuong = D.vi.filter(v => !v.the), curMd = (viThuong.find(v => v.ten === viMacDinh) || viThuong[0] || {}).ten || '';
   return `<button class="back" data-act="tab" data-t="home">‹ Tổng quan</button>
   <div class="top" style="margin-top:4px"><h1>Tùy chỉnh</h1></div>
   <h2>Mở nhanh</h2>
   <div class="card">${nhanh}</div>
+  ${viThuong.length > 1 ? `<h2>Ví hiển thị mặc định</h2>
+  <div class="card"><div class="set"><span class="sp">Số dư chính</span><div class="seg">${viThuong.map(v => `<button class="${v.ten === curMd ? 'on' : ''}" data-act="vimd" data-v="${esc(v.ten)}">${esc(tenVi(v))}</button>`).join('')}</div></div></div>` : ''}
   <h2>Màu nhấn và nền</h2>
   <div class="card">
     <div class="sw">${Object.keys(MAU).map(k => `<button class="${k === mau ? 'on' : ''}" data-act="mau" data-k="${k}"><i style="background:${MAU[k][0]}"></i>${MAU[k][1]}</button>`).join('')}</div>
@@ -881,6 +898,9 @@ document.addEventListener('click', e => {
   if (a === 'tab') { tab = el.dataset.t; rung(); ve(); scrollTo(0, 0); }
   else if (a === 'thang') { thang = doiThang(thang, Number(el.dataset.b)); rung(); ve(); }
   else if (a === 'loc') { locDm = el.dataset.dm; rung(); ve(); }
+  else if (a === 'locvi') { locVi = el.dataset.v; rung(); ve(); }
+  else if (a === 'vichon') { viChon = el.dataset.v; rung(); ve(); }
+  else if (a === 'vimd') { viMacDinh = el.dataset.v; viChon = viMacDinh; try { localStorage.setItem('vi_macdinh', viMacDinh); } catch (e) {} rung(); ve(); toast('Đã đặt ví mặc định'); }
   else if (a === 'gd') { rung(); sheetGd(el.dataset.id); }
   else if (a === 'dong') { if (e.target === el) dongSheet(); }
   else if (a === 'dk') { rung(); sheetDK(el.dataset.id); }
