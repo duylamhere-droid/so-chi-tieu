@@ -192,7 +192,7 @@ const TS_MAC_DINH = ['cocau','theothang','tk','dt','the','chovay','minhno','xong
 let tsSort = false;
 let tsThuTu = (() => { try { const a = JSON.parse(localStorage.getItem('ts_thutu') || 'null'); if (Array.isArray(a)) return a.filter(k => TS_MAC_DINH.includes(k)).concat(TS_MAC_DINH.filter(k => !a.includes(k))); } catch (e) {} return TS_MAC_DINH.slice(); })();
 let tsDong = (() => { try { return JSON.parse(localStorage.getItem('ts_dong') || '{}') || {}; } catch (e) {} return {}; })();
-let locDm = '', locVi = '', kyDm = 'thang';
+let locDm = '', locVi = '', kyDm = 'ngay';
 let viMacDinh = (() => { try { return localStorage.getItem('vi_macdinh') || ''; } catch (e) {} return ''; })();
 let viChon = viMacDinh;
 let subGd = 'ds', subKh = 'dk', timQ = '';
@@ -424,7 +424,7 @@ function phanDsGd(){
     <div><div class="cap">Thu</div><div class="num plus" style="font-size:22px;font-weight:600">${ngan(tl.thucThu)}</div></div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-    <button class="chip ${locDm ? 'on' : ''}" data-act="chondm">${locDm ? esc(((info[locDm] || {}).emoji || '') + ' ' + locDm) : '🏷️ Danh mục: Tất cả'} ▾</button>
+    <button class="chip ${locDm ? 'on' : ''}" data-act="locdm">${locDm ? esc(((info[locDm] || {}).emoji || '') + ' ' + locDm) : '🏷️ Danh mục: Tất cả'} ▾</button>
     ${locDm ? `<button class="chip" data-act="loc" data-dm="">✕ Bỏ lọc</button>` : ''}
   </div>`;
   }
@@ -925,7 +925,7 @@ document.addEventListener('click', e => {
   if (a === 'tab') { tab = el.dataset.t; rung(); ve(); scrollTo(0, 0); }
   else if (a === 'thang') { thang = doiThang(thang, Number(el.dataset.b)); rung(); ve(); }
   else if (a === 'loc') { locDm = el.dataset.dm; dongSheet(); rung(); ve(); }
-  else if (a === 'chondm') { rung(); sheetChonDm(); }
+  else if (a === 'locdm') { rung(); sheetChonDm(); }
   else if (a === 'kydm') { kyDm = el.dataset.v; rung(); ve(); }
   else if (a === 'locvi') { locVi = el.dataset.v; rung(); ve(); }
   else if (a === 'vichon') { viChon = el.dataset.v; rung(); ve(); }
