@@ -248,13 +248,14 @@ async function goi(params, okMsg){
 }
 
 /* ---------- biểu đồ SVG ---------- */
-function donut(parts, size){
+function donut(parts, size, click){
   const tong = parts.reduce((a, p) => a + p.v, 0);
   const r = 15.9155, C = 100;
   let off = 25, s = `<circle cx="21" cy="21" r="${r}" fill="none" stroke="var(--soft)" stroke-width="3.2"/>`;
   parts.forEach(p => {
     const len = p.v / tong * C, l = Math.max(len - 0.8, 0.01);
-    s += `<circle cx="21" cy="21" r="${r}" fill="none" stroke="${p.c}" stroke-width="3.2" stroke-dasharray="${l} ${C - l}" stroke-dashoffset="${off}"/>`;
+    const act = click ? ` style="cursor:pointer" data-act="dmct" data-ten="${esc(p.ten)}"` : '';
+    s += `<circle cx="21" cy="21" r="${r}" fill="none" stroke="${p.c}" stroke-width="3.2" stroke-dasharray="${l} ${C - l}" stroke-dashoffset="${off}"${act}/>`;
     off -= len;
   });
   return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="Biểu đồ tròn">${s}
@@ -265,8 +266,9 @@ function stack(parts){
   const tong = parts.reduce((a, p) => a + p.v, 0);
   return `<div class="stack">${tong ? parts.map(p => `<i style="flex:${p.v};background:${p.c}"></i>`).join('') : ''}</div>`;
 }
-function dongLg(p, tong){
-  return `<div class="lg"><span class="dot" style="background:${p.c}"></span><span class="sp">${esc(p.ten)}</span><span class="pc">${tong ? Math.round(p.v * 100 / tong) + '%' : ''}</span><b class="num">${ngan(p.v)}</b></div>`;
+function dongLg(p, tong, click){
+  const act = click ? ` style="cursor:pointer" data-act="dmct" data-ten="${esc(p.ten)}"` : '';
+  return `<div class="lg"${act}><span class="dot" style="background:${p.c}"></span><span class="sp">${esc(p.ten)}</span><span class="pc">${tong ? Math.round(p.v * 100 / tong) + '%' : ''}</span><b class="num">${ngan(p.v)}</b></div>`;
 }
 function loaiCuaDm(){ const m = {}; D.danhMuc.forEach(d => m[d.ten] = d.loai); return m; }
 function kieu(g, ld){
@@ -321,8 +323,8 @@ function dongGd(g, info){
   const viTxt = v ? v.emoji + ' ' + (v.the ? 'Thẻ' : tenVi(v)) : g.vi;
   return `<div class="tx" data-act="gd" data-id="${esc(g.id)}">
     <div class="ic">${esc(d.emoji || '•')}</div>
-    <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
-    <div class="muted">${esc(g.dm)} · ${esc(viTxt)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })}</div></div>
+    <div class="sp"><div class="t">${esc(g.dm)}</div>
+    <div class="muted">${esc(tenNgan(g))} · ${esc(viTxt)} · ${new Date(g.t).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' })}</div></div>
     <div class="amt ${amtCls(g)}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
 }
 function amtCls(g){ const k = kieu(g, loaiCuaDm()); return k === 'chuyenRa' || k === 'chuyenVao' || k === 'noiBo' ? 'chuyen' : g.thu ? 'plus' : ''; }
@@ -453,9 +455,9 @@ function veBieuDo(){
   const coSo = tongT.filter(x => x);
   const tb = coSo.length ? coSo.reduce((a, b) => a + b, 0) / coSo.length : 0;
   return `<h2>Theo danh mục</h2>
-  <div class="card"><div style="display:flex;justify-content:center;padding:6px 0 12px">${donut(parts, 170)}</div>
+  <div class="card"><div style="display:flex;justify-content:center;padding:6px 0 12px">${donut(parts, 170, true)}</div>
     ${stack(parts)}
-    <div style="margin-top:8px">${parts.length ? parts.map(p => dongLg(p, tongChi)).join('') : '<div class="muted">Chưa có khoản chi nào 🍃</div>'}</div></div>
+    <div style="margin-top:8px">${parts.length ? parts.map(p => dongLg(p, tongChi, true)).join('') : '<div class="muted">Chưa có khoản chi nào 🍃</div>'}</div></div>
   <h2>Từng ngày</h2>
   <div class="card"><div class="bars">${ngay.map((v, i) => `<div class="${v ? (i === imax ? 'hi' : 'v') : ''}" style="height:${v ? Math.max(v / max * 100, 3) : 1.5}%"></div>`).join('')}</div>
     <div class="axis"><span>1</span><span>${Math.ceil(n / 2)}</span><span>${n}</span></div>
@@ -810,6 +812,27 @@ function sheetChonDm(){
 }
 function moSheet(html){ document.getElementById('sheet').innerHTML = `<div class="sheet-bg" data-act="dong"><div class="sheet"><div class="grab"></div>${html}</div></div>`; }
 function dongSheet(){ document.getElementById('sheet').innerHTML = ''; }
+function sheetDmChiTiet(ten){
+  const raw = gds(), all = locVi ? raw.filter(g => g.vi === locVi) : raw, trong = all.filter(g => khoaThang(g.t) === thang);
+  const ld = loaiCuaDm(), info = dmInfo(), d = info[ten] || {};
+  const ds = trong.filter(g => g.dm === ten && (kieu(g, ld) === 'chi' || kieu(g, ld) === 'hoan')).sort((a, b) => b.t - a.t);
+  const tongDm = ds.reduce((a, g) => a + (kieu(g, ld) === 'hoan' ? -g.tien : g.tien), 0);
+  const tongChi = tong(trong).thucTieu;
+  const pt = tongChi ? Math.round(tongDm * 100 / tongChi) : 0;
+  const rows = ds.length ? ds.map(g => {
+    const dt = new Date(g.t);
+    const ngay = dt.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', timeZone:'Asia/Ho_Chi_Minh' });
+    const gio = dt.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit', timeZone:'Asia/Ho_Chi_Minh' });
+    return `<div class="tx" data-act="gd" data-id="${esc(g.id)}">
+      <div class="ic">${esc(d.emoji || '•')}</div>
+      <div class="sp"><div class="t">${esc(tenNgan(g))}</div>
+      <div class="muted">${ngay} · ${gio}</div></div>
+      <div class="amt ${amtCls(g)}">${g.thu ? '+' : '−'}${ngan(g.tien)}</div></div>`;
+  }).join('') : '<div class="muted" style="padding:12px 0">Không có giao dịch nào 🍃</div>';
+  moSheet(`<h3>${esc(d.emoji || '•')} ${esc(ten)} · Tháng ${Number(thang.slice(5))}</h3>
+    <div class="muted" style="margin:-6px 0 10px">${ngan(tongDm)} · ${pt}% tổng chi · Bấm dòng để sửa</div>
+    <div>${rows}</div>`);
+}
 
 function selVi(id, ds, chon){ return `<select id="${id}">${ds.map(v => `<option ${v.ten === chon ? 'selected' : ''}>${esc(v.ten)}</option>`).join('')}</select>`; }
 /** Khoản do sổ tiết kiệm/đầu tư tạo chỉ sửa ghi chú và ngày; khoản nợ, chuyển ví giữ nguyên danh mục. */
@@ -931,6 +954,7 @@ document.addEventListener('click', e => {
   else if (a === 'vichon') { viChon = el.dataset.v; rung(); ve(); }
   else if (a === 'vimd') { viMacDinh = el.dataset.v; viChon = viMacDinh; try { localStorage.setItem('vi_macdinh', viMacDinh); } catch (e) {} rung(); ve(); toast('Đã đặt ví mặc định'); }
   else if (a === 'gd') { rung(); sheetGd(el.dataset.id); }
+  else if (a === 'dmct') { rung(); sheetDmChiTiet(el.dataset.ten); }
   else if (a === 'dong') { if (e.target === el) dongSheet(); }
   else if (a === 'dk') { rung(); sheetDK(el.dataset.id); }
   else if (a === 'dkmoi') { rung(); sheetDK(''); }
