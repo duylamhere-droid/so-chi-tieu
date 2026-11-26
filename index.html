@@ -246,9 +246,63 @@ async function api(params){
   luuCacheApp(j.data);
   return j.data;
 }
+function apDungTam(X, p){
+  const luc = (ngay, cu) => !ngay ? (cu || Date.now()) : cu && khoaNgay(cu) === ngay ? cu : ngay === khoaNgay(Date.now()) ? Date.now() : msNgay(ngay) + 5 * 3600e3;
+  const congVi = (ten, delta) => { const v = X.vi.find(x => x.ten === ten); if (v) v.soDu += delta; };
+  if (p.api === 'dm') { const r = X.gd.find(x => x[0] === p.id); if (r) r[4] = p.ten; }
+  else if (p.api === 'dkluu') { const d = X.dk.find(x => x.id === p.id); const o = { ten:p.ten, tien:+p.tien, chuKy:p.chuKy, tiep:p.tiep, nhac:p.nhac, gio:+p.gio, vi:p.vi, trangThai:p.trangThai, dm:'Gói đăng ký' }; if (d) Object.assign(d, o); else X.dk.push(Object.assign({ id:'dk' + Math.random() }, o)); }
+  else if (p.api === 'dktra') { const d = X.dk.find(x => x.id === p.id); if (d) { const a = d.tiep.split('-').map(Number); d.tiep = khoaNgay(Date.UTC(a[0], a[1], a[2]) - 7 * 3600e3 + 3600e3); } }
+  else if (p.api === 'dkhuy') X.dk = X.dk.filter(x => x.id !== p.id);
+  else if (p.api === 'xoa') { const r = X.gd.find(x => x[0] === p.id); if (r) congVi(r[5], r[2] === 1 ? -r[3] : r[3]); X.gd = X.gd.filter(x => x[0] !== p.id); }
+  else if (p.api === 'gdthem') {
+    const thu = p.kieu === 'thu' ? 1 : 0, tien = +p.tien;
+    X.gd.push(['x' + Math.random().toString(36).slice(2, 8), luc(p.ngay), thu, tien, p.kieu === 'chuyen' ? 'Chuyển ví' : p.dm, p.vi, p.kieu === 'chuyen' ? (p.ghi ? p.ghi + ' ' : '') + '→ ' + p.viDen : p.ghi, 'App']);
+    congVi(p.vi, thu ? tien : -tien);
+    if (p.kieu === 'chuyen' && p.viDen) congVi(p.viDen, tien);
+  }
+  else if (p.api === 'gdsua') {
+    const r = X.gd.find(x => x[0] === p.id);
+    if (r) {
+      const cuTien = r[3], cuVi = r[5], dau = r[2] === 1 ? 1 : -1;
+      r[1] = luc(p.ngay, r[1]);
+      if (p.tien) r[3] = +p.tien;
+      if (p.dm) r[4] = p.dm;
+      if (p.vi) r[5] = p.vi;
+      const m = String(r[6]).match(/→\s*.+$/);
+      r[6] = m && !/→/.test(p.ghi) ? (p.ghi ? p.ghi + ' ' : '') + m[0] : p.ghi;
+      if (r[5] === cuVi) congVi(cuVi, dau * (r[3] - cuTien));
+      else { congVi(cuVi, -dau * cuTien); congVi(r[5], dau * r[3]); }
+    }
+  }
+  else if (p.api === 'nsluu') { const d = X.danhMuc.find(x => x.ten === p.ten); if (d) d.ns = +p.tien; }
+  else if (p.api === 'sodu') { const v = X.vi.find(x => x.ten === p.vi); if (v) v.soDu = v.the ? -Math.abs(+p.tien) : +p.tien; }
+  else if (p.api === 'caidat') X.caiDat[p.khoa] = p.gt;
+  else if (p.api === 'dmluu') { const d = X.danhMuc.find(x => x.ten === p.cu); if (d) { X.gd.forEach(r => r[4] === p.cu && (r[4] = p.ten)); d.ten = p.ten; d.emoji = p.emoji; } else X.danhMuc.push({ ten:p.ten, emoji:p.emoji || '•', loai:p.loai }); }
+  else if (p.api === 'dmxoa') { const d = X.danhMuc.find(x => x.ten === p.ten); if (d) { X.gd.forEach(r => r[4] === p.ten && (r[4] = KHAC[d.loai])); X.danhMuc = X.danhMuc.filter(x => x.ten !== p.ten); } }
+  else return false;
+  return true;
+}
 async function goi(params, okMsg){
-  try { D = await api(params); apDungMau(); ve(); if (okMsg) { rung('ok'); toast(okMsg); } }
-  catch (e) { toast('⚠️ ' + e.message); }
+  if (DEMO) {
+    try { D = await api(params); apDungMau(); ve(); if (okMsg) { rung('ok'); toast(okMsg); } }
+    catch (e) { toast('⚠️ ' + e.message); }
+    return;
+  }
+  const prev = JSON.stringify(D);
+  const coTam = apDungTam(D, params);
+  if (coTam) {
+    luuCacheApp(D); apDungMau(); ve();
+    if (okMsg) { rung('ok'); toast(okMsg); }
+  }
+  try {
+    D = await api(params);
+    apDungMau(); ve();
+    if (!coTam && okMsg) { rung('ok'); toast(okMsg); }
+  } catch (e) {
+    D = JSON.parse(prev);
+    luuCacheApp(D); apDungMau(); ve();
+    toast('⚠️ ' + e.message);
+  }
 }
 
 /* ---------- biểu đồ SVG ---------- */
@@ -1249,19 +1303,7 @@ function demoApi(p){
     };
   }
   const X = window._demo;
-  if (p.api === 'dm') X.gd.find(r => r[0] === p.id)[4] = p.ten;
-  if (p.api === 'dkluu') { const d = X.dk.find(x => x.id === p.id); const o = { ten:p.ten, tien:+p.tien, chuKy:p.chuKy, tiep:p.tiep, nhac:p.nhac, gio:+p.gio, vi:p.vi, trangThai:p.trangThai, dm:'Gói đăng ký' }; if (d) Object.assign(d, o); else X.dk.push(Object.assign({ id:'dk' + Math.random() }, o)); }
-  if (p.api === 'dktra') { const d = X.dk.find(x => x.id === p.id); const a = d.tiep.split('-').map(Number); d.tiep = khoaNgay(Date.UTC(a[0], a[1], a[2]) - 7 * 3600e3 + 3600e3); }
-  if (p.api === 'dkhuy') X.dk = X.dk.filter(x => x.id !== p.id);
-  if (p.api === 'xoa') X.gd = X.gd.filter(r => r[0] !== p.id);
-  const luc = (ngay, cu) => !ngay ? (cu || Date.now()) : cu && khoaNgay(cu) === ngay ? cu : ngay === khoaNgay(Date.now()) ? Date.now() : msNgay(ngay) + 5 * 3600e3;
-  if (p.api === 'gdthem') X.gd.push(['x' + Math.random().toString(36).slice(2, 8), luc(p.ngay), p.kieu === 'thu' ? 1 : 0, +p.tien, p.kieu === 'chuyen' ? 'Chuyển ví' : p.dm, p.vi, p.kieu === 'chuyen' ? (p.ghi ? p.ghi + ' ' : '') + '→ ' + p.viDen : p.ghi, 'App']);
-  if (p.api === 'gdsua') { const r = X.gd.find(x => x[0] === p.id); r[1] = luc(p.ngay, r[1]); if (p.tien) r[3] = +p.tien; if (p.dm) r[4] = p.dm; if (p.vi) r[5] = p.vi; const m = String(r[6]).match(/→\s*.+$/); r[6] = m && !/→/.test(p.ghi) ? (p.ghi ? p.ghi + ' ' : '') + m[0] : p.ghi; }
-  if (p.api === 'nsluu') X.danhMuc.find(d => d.ten === p.ten).ns = +p.tien;
-  if (p.api === 'sodu') { const v = X.vi.find(x => x.ten === p.vi); if (v) v.soDu = v.the ? -Math.abs(+p.tien) : +p.tien; }
-  if (p.api === 'caidat') X.caiDat[p.khoa] = p.gt;
-  if (p.api === 'dmluu') { const d = X.danhMuc.find(x => x.ten === p.cu); if (d) { X.gd.forEach(r => r[4] === p.cu && (r[4] = p.ten)); d.ten = p.ten; d.emoji = p.emoji; } else X.danhMuc.push({ ten:p.ten, emoji:p.emoji || '•', loai:p.loai }); }
-  if (p.api === 'dmxoa') { const d = X.danhMuc.find(x => x.ten === p.ten); X.gd.forEach(r => r[4] === p.ten && (r[4] = KHAC[d.loai])); X.danhMuc = X.danhMuc.filter(x => x.ten !== p.ten); }
+  apDungTam(X, p);
   if (/tab=(\w+)/.test(location.search) && !window._tabSet) { window._tabSet = 1; tab = location.search.match(/tab=(\w+)/)[1]; }
   return Promise.resolve(JSON.parse(JSON.stringify(X)));
 }
