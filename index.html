@@ -365,7 +365,7 @@ function veHome(){
   const ns = nganSach(thang);
   return `<div class="top"><span class="hello">${chao}</span><div class="row" style="gap:8px">${oThang()}<button class="gear" data-act="tab" data-t="cd" aria-label="Tùy chỉnh">${ICON.cd}</button></div></div>
   <div class="stk" style="background:var(--peach);margin-top:18px">
-    <div class="cat"><svg width="38" height="38" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></div>
+    <button class="cat" data-act="sodu" data-vi="${esc(curVi.ten)}" aria-label="Sửa số dư" title="Sửa số dư" style="background:none;padding:4px;border-radius:10px"><svg width="38" height="38" viewBox="0 0 24 24" fill="#9FD9A8" stroke="#2B2622" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14z"/><path d="M5 19l8-8" fill="none"/></svg></button>
     ${viThuong.length > 1 ? `<div class="seg" style="display:inline-flex;background:rgba(43,38,34,.08);padding:2px;margin-bottom:4px">${viThuong.map(v => `<button class="${v.ten === curVi.ten ? 'on' : ''}" data-act="vichon" data-v="${esc(v.ten)}" style="padding:3px 9px;font-size:12px">${esc(tenVi(v))}</button>`).join('')}</div>` : ''}
     <div class="bg num">${so}<span style="font-size:18px">đ</span></div>
     <div style="font-size:11px;opacity:.62">${viConLai.map(v => esc(v.emoji + ' ' + ngan(v.soDu))).join(' · ')}${viConLai.length ? ' · ' : ''}💰 ${ngan(tongDu)}${noThe ? ' · 💳 −' + ngan(noThe) : ''}</div>
@@ -870,6 +870,22 @@ function sheetGd(id){
     <button class="btn soft danger" data-act="xoa" data-id="${esc(g.id)}">Xóa khoản này</button>
     <div class="ghim"><button class="btn pri" data-act="gsluu" data-id="${esc(g.id)}">Lưu thay đổi</button></div>`);
 }
+function sheetSoDu(viTen){
+  const v = D.vi.find(x => x.ten === viTen) || D.vi[0];
+  if (!v) return;
+  const hienTai = v.the ? Math.max(0, -v.soDu) : v.soDu;
+  moSheet(`<h3>Sửa số dư</h3>
+    <div class="muted" style="margin-top:4px">${v.the ? 'Nhập dư nợ thẻ hiện tại' : 'Nhập số dư thực tế trong ví / ngân hàng'}</div>
+    ${D.vi.length > 1 ? `<div class="seg" style="margin-top:10px;flex-wrap:wrap">${D.vi.map(x => `<button class="${x.ten === v.ten ? 'on' : ''}" data-act="sdvi" data-v="${esc(x.ten)}">${esc(x.emoji + ' ' + tenVi(x))}</button>`).join('')}</div>` : ''}
+    <div class="muted" style="margin-top:12px">${v.the ? 'Dư nợ đang có' : 'Số dư hiện tại'}: <b class="num">${vnd(hienTai)}</b></div>
+    <input class="inp" id="sdTien" placeholder="vd: 5tr, 5230000, 300k" value="${hienTai}" autocomplete="off">
+    <div class="seg big2" style="margin-top:12px">
+      <button class="on" data-act="sdkieu" data-v="dat">Đặt lại số dư</button>
+      <button data-act="sdkieu" data-v="bu">Bù phần lệch</button>
+    </div>
+    <div class="muted" id="sdGiaiThich" style="margin-top:6px;font-size:12px">Chỉnh thẳng số dư đầu, không tạo khoản thu/chi mới.</div>
+    <div class="ghim"><button class="btn pri" data-act="sdluu" data-vi="${esc(v.ten)}">Lưu số dư</button></div>`);
+}
 function sheetThem(){
   if (!nhap) nhap = { kieu:'chi', tien:'', dm:'', vi:(D.vi.find(v => !v.the) || D.vi[0] || {}).ten, viDen:'', ngay:khoaNgay(Date.now()), ghi:'' };
   const n = nhap, viTien = D.vi.filter(v => !v.the);
@@ -1089,6 +1105,21 @@ document.addEventListener('click', e => {
     dongSheet(); goi({ api:'nsluu', ten:el.dataset.ten, tien }, 'Đã đặt ngân sách');
   }
   else if (a === 'nsbo') { dongSheet(); goi({ api:'nsluu', ten:el.dataset.ten, tien:0 }, 'Đã bỏ ngân sách'); }
+  else if (a === 'sodu') { rung(); sheetSoDu(el.dataset.vi); }
+  else if (a === 'sdvi') { rung(); sheetSoDu(el.dataset.v); }
+  else if (a === 'sdkieu') {
+    el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung();
+    document.getElementById('sdGiaiThich').textContent = el.dataset.v === 'bu'
+      ? 'Tự ghi 1 khoản Thu/Chi phần chênh lệch vào mục Khác.'
+      : 'Chỉnh thẳng số dư đầu, không tạo khoản thu/chi mới.';
+  }
+  else if (a === 'sdluu') {
+    const raw = document.getElementById('sdTien').value.trim();
+    const tien = raw === '0' ? 0 : tienApp(raw);
+    if (tien === null || (tien === 0 && raw !== '0') || !raw) return toast('Số tiền chưa đúng, ví dụ 5tr');
+    const kieu = (document.querySelector('[data-act=sdkieu].on') || {}).dataset.v || 'dat';
+    dongSheet(); goi({ api:'sodu', vi:el.dataset.vi, tien, kieu }, 'Đã cập nhật số dư');
+  }
   else if (a === 'chondm') { el.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); rung(); }
   else if (a === 'them') { rung(); sheetThem(); }
   else if (a === 'nhkieu') { docNhapApp(); nhap.kieu = el.dataset.v; nhap.dm = ''; rung(); sheetThem(); }
@@ -1227,6 +1258,7 @@ function demoApi(p){
   if (p.api === 'gdthem') X.gd.push(['x' + Math.random().toString(36).slice(2, 8), luc(p.ngay), p.kieu === 'thu' ? 1 : 0, +p.tien, p.kieu === 'chuyen' ? 'Chuyển ví' : p.dm, p.vi, p.kieu === 'chuyen' ? (p.ghi ? p.ghi + ' ' : '') + '→ ' + p.viDen : p.ghi, 'App']);
   if (p.api === 'gdsua') { const r = X.gd.find(x => x[0] === p.id); r[1] = luc(p.ngay, r[1]); if (p.tien) r[3] = +p.tien; if (p.dm) r[4] = p.dm; if (p.vi) r[5] = p.vi; const m = String(r[6]).match(/→\s*.+$/); r[6] = m && !/→/.test(p.ghi) ? (p.ghi ? p.ghi + ' ' : '') + m[0] : p.ghi; }
   if (p.api === 'nsluu') X.danhMuc.find(d => d.ten === p.ten).ns = +p.tien;
+  if (p.api === 'sodu') { const v = X.vi.find(x => x.ten === p.vi); if (v) v.soDu = v.the ? -Math.abs(+p.tien) : +p.tien; }
   if (p.api === 'caidat') X.caiDat[p.khoa] = p.gt;
   if (p.api === 'dmluu') { const d = X.danhMuc.find(x => x.ten === p.cu); if (d) { X.gd.forEach(r => r[4] === p.cu && (r[4] = p.ten)); d.ten = p.ten; d.emoji = p.emoji; } else X.danhMuc.push({ ten:p.ten, emoji:p.emoji || '•', loai:p.loai }); }
   if (p.api === 'dmxoa') { const d = X.danhMuc.find(x => x.ten === p.ten); X.gd.forEach(r => r[4] === p.ten && (r[4] = KHAC[d.loai])); X.danhMuc = X.danhMuc.filter(x => x.ten !== p.ten); }
