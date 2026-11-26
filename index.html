@@ -234,12 +234,16 @@ function tenNgan(g){
 }
 
 /* ---------- gọi Apps Script ---------- */
+const CACHE_KEY = 'sct_cache_v1';
+function docCacheApp(){ try { const s = localStorage.getItem(CACHE_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+function luuCacheApp(d){ try { localStorage.setItem(CACHE_KEY, JSON.stringify(d)); } catch (e) {} }
 async function api(params){
   if (DEMO) return demoApi(params);
   const q = new URLSearchParams(Object.assign({}, params, { init: tg.initData }));
   const r = await fetch(API + '?' + q.toString());
   const j = await r.json();
   if (!j.ok) throw new Error(j.loi || 'Lỗi không rõ');
+  luuCacheApp(j.data);
   return j.data;
 }
 async function goi(params, okMsg){
@@ -1154,8 +1158,20 @@ async function batDau(){
     document.getElementById('app').innerHTML = '<div class="center"><div style="font-size:34px">🌿</div><b>Mở app từ bot Telegram nha</b><div class="muted">Trang này chỉ chạy bên trong Telegram để giữ dữ liệu của cậu an toàn.</div></div>';
     return;
   }
-  try { D = await api({ api:'data' }); apDungMau(); ve(); }
-  catch (e) { document.getElementById('app').innerHTML = `<div class="center"><div style="font-size:34px">🥲</div><b>Chưa mở được sổ</b><div class="muted">${esc(e.message)}</div><button class="btn pri" style="width:auto;padding:10px 20px" onclick="location.reload()">Thử lại</button></div>`; }
+  const cached = !DEMO && docCacheApp();
+  if (cached) {
+    D = cached;
+    apDungMau();
+    ve();
+  }
+  try {
+    D = await api({ api:'data' });
+    apDungMau();
+    ve();
+  } catch (e) {
+    if (cached) toast('⚠️ Đang xem bản cũ (mạng chậm)');
+    else document.getElementById('app').innerHTML = `<div class="center"><div style="font-size:34px">🥲</div><b>Chưa mở được sổ</b><div class="muted">${esc(e.message)}</div><button class="btn pri" style="width:auto;padding:10px 20px" onclick="location.reload()">Thử lại</button></div>`;
+  }
 }
 
 /* ---------- dữ liệu mẫu để xem thử ngoài Telegram (?demo) ---------- */
